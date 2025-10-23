@@ -19,6 +19,7 @@ public class CompositeController {
     this.store = store;
   }
 
+ 
   @GetMapping("/daily")
   public ResponseEntity<?> getDaily(@RequestParam String symbol) {
     final String key = System.getenv("ALPHAVANTAGE_API_KEY");

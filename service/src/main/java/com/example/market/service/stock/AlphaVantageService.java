@@ -27,7 +27,7 @@ public class AlphaVantageService implements StockDataService {
         if (apiKey == null || apiKey.isBlank()) throw new IllegalArgumentException("apiKey is required");
 
         final String url = "https://www.alphavantage.co/query"
-                + "?function=TIME_SERIES_DAILY&outputsize=compact"
+                + "?function=TIME_SERIES_DAILY&outputsize=full"
                 + "&symbol=" + enc(symbol)
                 + "&apikey=" + enc(apiKey);
 
@@ -51,7 +51,7 @@ public class AlphaVantageService implements StockDataService {
 
     /* ---------- helpers ---------- */
 
-    private JsonNode getJson(final String url) throws Exception {
+    protected JsonNode getJson(final String url) throws Exception {
         final HttpRequest req = HttpRequest.newBuilder(URI.create(url)).GET().build();
         final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
         if (resp.statusCode() != 200) throw new IllegalStateException("HTTP " + resp.statusCode());
