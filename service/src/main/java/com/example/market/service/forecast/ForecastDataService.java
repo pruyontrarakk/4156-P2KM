@@ -1,6 +1,8 @@
 package com.example.market.service.forecast;
 
 
+import com.example.market.service.forecast.python.PythonService;
+import com.example.market.service.forecast.python.PythonService2;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,10 +15,17 @@ import java.util.Map;
 @Service
 public class ForecastDataService {
 
+  private final PythonService pythonService;
+  private final PythonService2 pythonService2;
+
+
   /**
    * Constructs a new {@code ForecastDataService}
    */
-  public ForecastDataService() {}
+  public ForecastDataService() {
+    this.pythonService = new PythonService();
+    this.pythonService2 = new PythonService2();
+  }
 
   /**
    * Predicts what the stock price will be over the course of 10 days.
@@ -37,6 +46,11 @@ public class ForecastDataService {
     prices.put("Date10","Price10");
 
     return prices;
+  }
+
+  public String printHelloWorld() {
+    return pythonService.helloWorld();
+//    return pythonService2.helloWorld();
   }
 
 }
