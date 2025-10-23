@@ -15,16 +15,34 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Service for fetching stock data from the Alpha Vantage API.
+ */
 @Service
 public class AlphaVantageService implements StockDataService {
 
+    /** HTTP client used to make outgoing requests. */
     private final HttpClient http = HttpClient.newHttpClient();
+    /** ObjectMapper used for JSON parsing. */
+
     private final ObjectMapper mapper = new ObjectMapper();
 
+    /** Value for success. */
+    private static final int HTTP_SUCCESS = 200;
+
+    /**
+     * Fetches the Alpha Vantage {@code TIME_SERIES_DAILY} for a symbol.
+     */
     @Override
-    public StockDailySeries fetchDaily(final String symbol, final String apiKey) throws Exception {
-        if (symbol == null || symbol.isBlank()) throw new IllegalArgumentException("symbol is required");
-        if (apiKey == null || apiKey.isBlank()) throw new IllegalArgumentException("apiKey is required");
+    public StockDailySeries fetchDaily(
+        final String symbol, final String apiKey
+    ) throws Exception {
+        if (symbol == null || symbol.isBlank()) {
+            throw new IllegalArgumentException("symbol is required");
+        }
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new IllegalArgumentException("apiKey is required");
+        }
 
         final String url = "https://www.alphavantage.co/query"
                 + "?function=TIME_SERIES_DAILY&outputsize=full"
@@ -32,12 +50,19 @@ public class AlphaVantageService implements StockDataService {
                 + "&apikey=" + enc(apiKey);
 
         final JsonNode root = getJson(url);
-        if (root.hasNonNull("Error Message")) throw new IllegalStateException(root.get("Error Message").asText());
-        if (root.hasNonNull("Note")) throw new IllegalStateException(root.get("Note").asText()); // throttle
+        if (root.hasNonNull("Error Message")) {
+            throw new IllegalStateException(root.get("Error Message").asText());
+        }
+        if (root.hasNonNull("Note")) {
+            throw new IllegalStateException(root.get("Note").asText());
+        }
 
         final JsonNode series = root.get("Time Series (Daily)");
-        if (series == null || series.isMissingNode() || !series.fieldNames().hasNext()) {
-            throw new IllegalStateException("Missing 'Time Series (Daily)' in response");
+        if (series == null
+            || series.isMissingNode()
+            || !series.fieldNames().hasNext()) {
+        throw new IllegalStateException(
+            "Missing 'Time Series (Daily)' in response");
         }
 
         final List<StockBar> bars = parseDailyBars(series);
@@ -51,21 +76,50 @@ public class AlphaVantageService implements StockDataService {
 
     /* ---------- helpers ---------- */
 
+    /**
+   * Fetches JSON data from a URL.
+   *
+   * @param url request URL
+   * @return parsed JSON root node
+   * @throws Exception on IO or non-200 status
+   */
     protected JsonNode getJson(final String url) throws Exception {
-        final HttpRequest req = HttpRequest.newBuilder(URI.create(url)).GET().build();
-        final HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString());
-        if (resp.statusCode() != 200) throw new IllegalStateException("HTTP " + resp.statusCode());
+        final HttpRequest req =
+            HttpRequest.newBuilder(URI.create(url))
+                .GET()
+                .build();
+
+        final HttpResponse<String> resp =
+            http.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != HTTP_SUCCESS) {
+            throw new IllegalStateException("HTTP " + resp.statusCode());
+        }
         return mapper.readTree(resp.body());
     }
 
+   /**
+   * Parses the "Time Series" object into StockBars.
+   *
+   * @param series the JSON node under "Time Series (Daily)"
+   * @return sorted list of daily bars (oldest → newest)
+   */
     private List<StockBar> parseDailyBars(final JsonNode series) {
         final List<StockBar> out = new ArrayList<>();
-        series.fieldNames().forEachRemaining(date -> out.add(StockBar.fromAlphaDaily(date, series.get(date))));
-        Collections.sort(out, (a, b) -> a.getTimestamp().compareTo(b.getTimestamp())); // ascending
+        series.fieldNames().forEachRemaining(date ->
+            out.add(StockBar.fromAlphaDaily(date, series.get(date))));
+        Collections.sort(out,
+            (a, b) -> a.getTimestamp().compareTo(b.getTimestamp()));
         return out;
     }
 
-    private static String enc(String s) {
-        return java.net.URLEncoder.encode(s, java.nio.charset.StandardCharsets.UTF_8);
+    /**
+   * URL-encodes a string using UTF-8.
+   *
+   * @param s the string to encode
+   * @return encoded value
+   */
+    private static String enc(final String s) {
+        return java.net.URLEncoder.encode(
+            s, java.nio.charset.StandardCharsets.UTF_8);
     }
 }
