@@ -1,0 +1,22 @@
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+*.iml
+
+# Maven / build outputs
+target/
+*/target/
+
+# Logs / temp
+*.log
+*.tmp
+
+# Runtime data caches
+stockDataService/data/
+data/
+stockDataService/data/**/*.json
+data/**/*.json
+
+# Maven wrapper jar 
+.mvn/wrapper/maven-wrapper.jar
