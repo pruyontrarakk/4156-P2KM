@@ -24,7 +24,7 @@ public class ForecastDataServiceUnitTests {
 
   @Test
   public void testPredictFuturePrices() {
-    Map<String, String> test = forecast.predictFuturePricesMain();
+    Map<String, String> test = forecast.predictFuturePrices("amazon");
     Map<String, String> prices = new HashMap<>();
     prices.put("2025-10-25", "1007.8772940063");
     prices.put("2025-10-24", "1007.8825640767");
