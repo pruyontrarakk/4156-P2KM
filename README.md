@@ -30,7 +30,10 @@ curl -i "http://localhost:8080/market/daily?symbol=AMZN"
 ### 2. NewsDataService [TODO]
 
 ### 3. ForecastDataService
-Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). It runs a Python script to predict the next stock prices of a given company.
+Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
+
+It includes a helper class called PythonService, which executes a Python script running TrendMaster’s forecasting model. 
+The service then parses the script’s JSON-formatted output and constructs a Map of dates and predicted prices for the ForecastDataService to use.
 
 ## Running Tests
 To run our unit tests (located under the directory `src/test`), run the following command in the most outer `service` directory
@@ -68,12 +71,11 @@ The following code can be run in terminal to check the PMD report.
 
 Results: [dont have yet]
 
-## Tools Used [TODO]
+## Summary of Tools Used
+- [Alpha Vantage](https://www.alphavantage.co/): Used for retrieving relevant stock data.
+- [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
 
 ## AI Disclosure
-
-## Third Party Documentation [TODO maybe??]
-
-
+AI was used for debugging and testing.
 
 ---
