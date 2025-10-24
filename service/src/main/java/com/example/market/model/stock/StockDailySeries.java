@@ -1,19 +1,26 @@
+// StockDailySeries.java
 package com.example.market.model.stock;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
-/** Ticker-agnostic compact daily time series payload. Bars are ascending by date. */
-public class StockDailySeries {
+public final class StockDailySeries {
   private final String symbol;
-  private final String asOfIso;   // fetch time
-  private final String source;    // provenance string for debugging
+  private final String asOfIso;
+  private final String source;
   private final List<StockBar> bars;
 
-  public StockDailySeries(String symbol, String asOfIso, String source, List<StockBar> bars) {
-    this.symbol = symbol;
-    this.asOfIso = asOfIso;
-    this.source = source;
-    this.bars = bars;
+  @JsonCreator
+  public StockDailySeries(
+      @JsonProperty("symbol") String symbolParam,
+      @JsonProperty("asOfIso") String asOfIsoParam,
+      @JsonProperty("source") String sourceParam,
+      @JsonProperty("bars") List<StockBar> barsParam) {
+    this.symbol = symbolParam;
+    this.asOfIso = asOfIsoParam;
+    this.source = sourceParam;
+    this.bars = barsParam;
   }
 
   public String getSymbol() { return symbol; }
