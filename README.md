@@ -120,10 +120,10 @@ Results: [dont have yet]
 ## Summary of Tools Used
 - [Alpha Vantage](https://www.alphavantage.co/): Used for retrieving relevant stock data.
 - [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
+- [Jira](https://p2km.atlassian.net/jira/software/projects/BTS/boards/1): Used for managing timeline and project tasks
 
 ## AI Disclosure
-
-## Third Party Documentation [TODO maybe??]
+We used the free version of ChatGPT to assist with debugging, drafting unit test, and wording.
 
 
 
