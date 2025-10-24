@@ -39,7 +39,7 @@ mvn spring-boot:run
 ```
 curl -i "http://localhost:8080/market/daily?symbol=AMZN"
 ```
-### 2. NewsDataService [TODO]
+### 2. NewsDataService [TODO in second iteration]
 
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
