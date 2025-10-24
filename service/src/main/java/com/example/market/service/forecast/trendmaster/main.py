@@ -31,5 +31,6 @@ predictions = inferencer.predict(
     future_steps=10
 )
 #print(predictions.to_json(), flush=True)
-json_str = json.dumps(predictions.to_json(), indent=4)
+predictions['Date'] = predictions['Date'].dt.strftime('%Y-%m-%d')
+json_str = json.dumps(predictions.to_json(date_format='iso'), indent=4)
 print(json_str)
