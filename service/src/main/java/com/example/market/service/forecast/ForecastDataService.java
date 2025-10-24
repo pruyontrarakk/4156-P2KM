@@ -48,8 +48,8 @@ public class ForecastDataService {
     return prices;
   }
 
-  public String printHelloWorld() {
-    return pythonService.helloWorld();
+  public Map<String, String> predictFuturePricesMain() {
+    return pythonService.predictFuturePrices();
 //    return pythonService2.helloWorld();
   }
 
