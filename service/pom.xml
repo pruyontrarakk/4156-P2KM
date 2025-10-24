@@ -1,13 +1,12 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0
-                             https://maven.apache.org/xsd/maven-4.0.0.xsd">
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.3.3</version>
+    <version>3.3.5</version>
     <relativePath/>
   </parent>
 
@@ -15,27 +14,24 @@
   <artifactId>market-service</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <name>market-service</name>
-  <description>Ticker-agnostic market data service</description>
+  <description>Composite market service</description>
   <packaging>jar</packaging>
 
   <properties>
     <java.version>21</java.version>
-    <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.surefire.plugin.version>3.2.5</maven.surefire.plugin.version>
+    <jacoco.plugin.version>0.8.12</jacoco.plugin.version>
   </properties>
 
   <dependencies>
-    <!-- Web & JSON -->
+    <!-- App -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-web</artifactId>
     </dependency>
-    <dependency>
-      <groupId>com.fasterxml.jackson.core</groupId>
-      <artifactId>jackson-databind</artifactId>
-    </dependency>
 
-    <!-- Testing -->
+    <!-- Tests -->
     <dependency>
       <groupId>org.springframework.boot</groupId>
       <artifactId>spring-boot-starter-test</artifactId>
@@ -53,50 +49,76 @@
 
   <build>
     <plugins>
-      <!-- Java 21 compilation -->
+      <!-- Compile with JDK 21 using ~/.m2/toolchains.xml -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.13.0</version>
         <configuration>
-          <release>${maven.compiler.release}</release>
+          <release>21</release>
+          <jdkToolchain>
+            <version>21</version>
+          </jdkToolchain>
         </configuration>
       </plugin>
 
-      <!-- Spring Boot packaging/run -->
       <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-toolchains-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <goals><goal>toolchain</goal></goals>
+          </execution>
+        </executions>
+        <configuration>
+          <toolchains>
+            <jdk>
+              <version>21</version>
+              <vendor>any</vendor>
+            </jdk>
+          </toolchains>
+        </configuration>
       </plugin>
 
-      <!-- Code coverage -->
+      <!-- Tests (JUnit 5) -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven.surefire.plugin.version}</version>
+        <configuration>
+          <useModulePath>false</useModulePath>
+          <includes>
+            <include>**/*Test.java</include>
+            <include>**/*Tests.java</include>
+          </includes>
+          <systemPropertyVariables>
+            <user.timezone>UTC</user.timezone>
+          </systemPropertyVariables>
+          <!-- If you MUST keep inline mocks on newer JDKs, uncomment:
+          <argLine>-Dnet.bytebuddy.experimental=true</argLine>
+          -->
+        </configuration>
+      </plugin>
+
+      <!-- Coverage -->
       <plugin>
         <groupId>org.jacoco</groupId>
         <artifactId>jacoco-maven-plugin</artifactId>
-        <version>0.8.12</version>
+        <version>${jacoco.plugin.version}</version>
         <executions>
-          <!-- Attach agent when tests run -->
           <execution>
             <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
+            <goals><goal>prepare-agent</goal></goals>
           </execution>
-          <!-- Generate HTML report at verify phase: target/site/jacoco/index.html -->
           <execution>
             <id>report</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>report</goal>
-            </goals>
+            <phase>test</phase>
+            <goals><goal>report</goal></goals>
           </execution>
-          <!-- Optional: enforce minimum coverage, uncomment to enable
           <execution>
             <id>check</id>
-            <phase>verify</phase>
-            <goals>
-              <goal>check</goal>
-            </goals>
+            <goals><goal>check</goal></goals>
             <configuration>
               <rules>
                 <rule>
@@ -105,15 +127,20 @@
                     <limit>
                       <counter>INSTRUCTION</counter>
                       <value>COVEREDRATIO</value>
-                      <minimum>0.50</minimum>
+                      <minimum>0.60</minimum>
                     </limit>
                   </limits>
                 </rule>
               </rules>
             </configuration>
           </execution>
-          -->
         </executions>
+      </plugin>
+
+      <!-- Spring Boot -->
+      <plugin>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-maven-plugin</artifactId>
       </plugin>
     </plugins>
   </build>

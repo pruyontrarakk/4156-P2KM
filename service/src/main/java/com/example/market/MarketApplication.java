@@ -6,7 +6,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 /**
  * Main Spring Boot application class for market service.
  */
-@SpringBootApplication
+@SpringBootApplication(proxyBeanMethods = false)
 public final class MarketApplication {
   /**
    * Private constructor to prevent instantiation.
