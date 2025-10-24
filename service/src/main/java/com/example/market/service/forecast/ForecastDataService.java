@@ -21,8 +21,8 @@ public class ForecastDataService {
   /**
    * Constructs a new {@code ForecastDataService}.
    */
-  public ForecastDataService() {
-    this.pythonService = new PythonService();
+  public ForecastDataService(PythonService pythonService) {
+    this.pythonService = pythonService;
   }
 
   /**

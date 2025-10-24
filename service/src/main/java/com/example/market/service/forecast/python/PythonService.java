@@ -16,6 +16,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class PythonService {
 
+  public PythonService() {}
+
   /**
    * Predicts the next 10 stock prices of a company.
    *
