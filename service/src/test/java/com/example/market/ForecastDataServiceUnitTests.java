@@ -23,19 +23,19 @@ public class ForecastDataServiceUnitTests {
   }
 
   @Test
-  public void testHelloWorld() {
+  public void testPredictFuturePrices() {
     Map<String, String> test = forecast.predictFuturePricesMain();
     Map<String, String> prices = new HashMap<>();
-    prices.put("Date1","Price1");
-    prices.put("Date2","Price2");
-    prices.put("Date3","Price3");
-    prices.put("Date4","Price4");
-    prices.put("Date5","Price5");
-    prices.put("Date6","Price6");
-    prices.put("Date7","Price7");
-    prices.put("Date8","Price8");
-    prices.put("Date9","Price9");
-    prices.put("Date10","Price10");
+    prices.put("2025-10-25", "1007.8772940063");
+    prices.put("2025-10-24", "1007.8825640767");
+    prices.put("2025-10-27", "1007.8708396505");
+    prices.put("2025-10-26", "1007.8733858643");
+    prices.put("2025-10-31", "1007.8668130798");
+    prices.put("2025-10-23", "1007.8867682902");
+    prices.put("2025-11-01", "1007.8654511515");
+    prices.put("2025-10-30", "1007.8678789368");
+    prices.put("2025-10-29", "1007.8688263652");
+    prices.put("2025-10-28", "1007.8698922221");
     assertEquals(prices, test);
   }
 }
