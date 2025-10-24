@@ -1,39 +1,42 @@
-package com.example.market.service.stock;
+package com.example.market.service.stock; // keep for now; you can move to infra later
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+
 import org.springframework.stereotype.Component;
 
 @Component
 public class JsonStore {
 
   private final ObjectMapper mapper = new ObjectMapper();
-  // Base folder for persisted files (repo-root /data). Adjust if you prefer another dir.
-  private final Path base = Paths.get("data");
+  private final Path base = Paths.get("data"); // repo-root/data
 
-  /** Resolve the cache file for a symbol's daily series, e.g. data/aapl-daily.json. */
+  /** data/stocks/<symbol>-daily.json */
   public Path dailyPath(final String symbol) {
-    return base.resolve(symbol.toLowerCase() + "-daily.json");
+    return base.resolve(Paths.get("stocks", norm(symbol) + "-daily.json"));
   }
 
-  /** True if the cache file exists. */
+  /** data/news/<symbol>.json */
+  public Path newsPath(final String symbol) {
+    return base.resolve(Paths.get("news", norm(symbol) + ".json"));
+  }
+
   public boolean exists(final Path file) {
     return Files.exists(file);
   }
 
-  /** Read and map JSON file to a type. */
   public <T> T read(final Path file, final Class<T> type) throws IOException {
-    byte[] bytes = Files.readAllBytes(file);
-    return mapper.readValue(bytes, type);
+    return mapper.readValue(Files.readAllBytes(file), type);
   }
 
-  /** Ensure parent folder exists and write JSON. */
   public void write(final Path file, final Object value) throws IOException {
     Files.createDirectories(file.getParent());
     byte[] bytes = mapper.writerWithDefaultPrettyPrinter().writeValueAsBytes(value);
-    Files.write(file, bytes);
+    Files.write(file, bytes, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+  }
+
+  private static String norm(String s) {
+    return s == null ? "" : s.trim().toLowerCase();
   }
 }
