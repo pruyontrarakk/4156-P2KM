@@ -1,9 +1,9 @@
-package com.example.market;
+package com.example;
 
 import com.example.market.service.forecast.ForecastDataService;
+import com.example.market.service.forecast.python.PythonService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.springframework.boot.test.context.SpringBootTest;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +13,14 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 /**
  * This class contains the unit tests for the ForecastDataService class.
  */
-@SpringBootTest
+
 public class ForecastDataServiceUnitTests {
   public static ForecastDataService forecast;
 
   @BeforeAll
   public static void setup() {
-    forecast = new ForecastDataService();
+    PythonService pythonService = new PythonService();
+    forecast = new ForecastDataService(pythonService);
   }
 
   @Test
