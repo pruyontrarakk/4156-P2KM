@@ -49,21 +49,17 @@ Returns a SentimentResult object that includes the company name, a sentiment sco
 Data is generated locally to simulate responses, but the structure allows for easy integration with an external API in the future.
 
 Example outputs: 
-```
 {"company":"Amazon","sentimentScore":4,"sentimentLabel":"positive"}
 {"company":"Meta","sentimentScore":3,"sentimentLabel":"neutral"}
-```
 
 To test the endpoint:
-```
 cd service
 mvn spring-boot:run
-```
 
-In another terminal run 
-```curl -i "http://localhost:8080/market/sentiment?symbol=AMZN"``` or ```http://localhost:8080/market/sentiment?symbol=AMZN``` in the browser.
+In another terminal run curl -i "http://localhost:8080/market/sentiment?symbol=AMZN" or http://localhost:8080/market/sentiment?symbol=AMZN in the browser. 
 
 The API will return a JSON response with the sentiment score and label for the specified company.
+
 
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
