@@ -30,6 +30,6 @@ predictions = inferencer.predict(
     input_window=30,
     future_steps=10
 )
-
+#print(predictions.to_json(), flush=True)
 json_str = json.dumps(predictions.to_json(), indent=4)
 print(json_str)

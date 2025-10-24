@@ -1,11 +1,17 @@
 package com.example.market.service.forecast.python;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Stream;
 
 /**
@@ -20,7 +26,7 @@ public class PythonService {
    *
    * @return The string "Hello World".
    */
-  public String helloWorld() {
+  public String runTrendMaster() {
     String result = "";
     try {
 //      ProcessBuilder pb = new ProcessBuilder("/usr/local/bin/python3", "src/main/java/com/example/market/service/forecast/trendmaster/main.py");
@@ -42,7 +48,7 @@ public class PythonService {
       if (lastLine == null) {
         throw new RuntimeException("No output from Python script.");
       }
-      System.out.println(lastLine);
+//      System.out.println(lastLine);
       result = lastLine;
 //      if ((line = reader.readLine()) != null) {
 //          result = line;
@@ -54,6 +60,37 @@ public class PythonService {
       process.waitFor();
     } catch (Exception e) {
       e.printStackTrace();
+    }
+
+    return result;
+  }
+
+  public Map<String, String> predictFuturePrices() {
+    String trendMasterResponse = runTrendMaster();
+//    Map<String, String> parsed = parseTrendMasterResponse(trendMasterResponse);
+    return parseTrendMasterResponse(trendMasterResponse);
+  }
+
+  private Map<String, String> parseTrendMasterResponse(String response) {
+    Map<String, String> result = new HashMap<>();
+    ObjectMapper mapper = new ObjectMapper();
+    try {
+      JsonNode outer = mapper.readTree(response);
+      JsonNode rootNode;
+      if (outer.isTextual()) {
+        rootNode = mapper.readTree(outer.asText());
+      } else {
+        rootNode = outer;
+      }
+      JsonNode dateNode = rootNode.get("Date");
+      JsonNode predictionNode = rootNode.get("Predicted_Close");
+
+      for(int i = 0; i < dateNode.size(); i++) {
+        result.put(dateNode.get(Integer.toString(i)).asText(), predictionNode.get(Integer.toString(i)).asText());
+      }
+
+    } catch (JsonProcessingException e) {
+      throw new RuntimeException(e);
     }
 
     return result;
