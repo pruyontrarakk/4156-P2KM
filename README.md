@@ -53,7 +53,14 @@ To run our unit tests (located under the directory `src/test`), run the followin
 mvn clean test
 ```
 
-## Endpoints [TODO]
+## Endpoints
+
+```GET /market/daily``` — Returns cached-or-fresh Alpha Vantage daily OHLCV for the ticker (AMZN)
+
+```GET /market/predict``` — Runs the placeholder forecast over the latest daily series (AMZN), returning a simple prediction map
+
+```GET /market/sentiment``` — Returns a placeholder news-sentiment payload (AMZN), with optional force to bypass cache.
+
 
 ## Style Checking Report [TODO]
 The tool "checkstyle" is used to check the style of our code and generate style checking reports. 
