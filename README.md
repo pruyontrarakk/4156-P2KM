@@ -96,8 +96,6 @@ Results: [dont have yet]
 
 ## AI Disclosure
 
-We used the free version of ChatGPT to assist with debugging, drafting unit test, and wording.
-
 ## Third Party Documentation [TODO maybe??]
 
 
