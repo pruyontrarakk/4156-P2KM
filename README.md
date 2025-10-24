@@ -71,14 +71,17 @@ The following code can be run in terminal to check the checkstyle report.
 
 Results: [dont have yet]
 
-## Branch Coverage Report [TODO]
+## Branch Coverage Report
 JaCoCo was used to perform branch analysis in order to see the branch coverage.
 The following code can be run in terminal to check the checkstyle report.
 1. `mvn clean test`
 2. `mvn jacoco:report`
 3. `open ./target/site/jacoco/index.html`
 
-Results: [dont have yet]
+Results: 
+<img width="1401" height="366" alt="image" src="https://github.com/user-attachments/assets/131cbb07-2b81-48c7-85f9-8a1747bd8ab2" />
+<img width="1417" height="327" alt="image" src="https://github.com/user-attachments/assets/4dcec872-486a-4fe6-ba6e-0e20cf18c47e" />
+
 
 ## Static Code Analysis [TODO]
 PMD was used to perform static analysis on the codebase.
