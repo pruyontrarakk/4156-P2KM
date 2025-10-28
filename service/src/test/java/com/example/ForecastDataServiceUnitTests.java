@@ -1,7 +1,7 @@
 package com.example;
 
 import com.example.market.service.forecast.ForecastDataService;
-import com.example.market.service.forecast.python.PythonService;
+//import com.example.market.service.forecast.python.PythonService;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -19,8 +19,8 @@ public class ForecastDataServiceUnitTests {
 
   @BeforeAll
   public static void setup() {
-    PythonService pythonService = new PythonService();
-    forecast = new ForecastDataService(pythonService);
+//    PythonService pythonService = new PythonService();
+    forecast = new ForecastDataService();
   }
 
   @Test
