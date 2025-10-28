@@ -39,7 +39,31 @@ mvn spring-boot:run
 ```
 curl -i "http://localhost:8080/market/daily?symbol=AMZN"
 ```
-### 2. NewsDataService [TODO]
+### 2. NewsDataService
+Service analyzing the media sentiment for a given company based on recent news and media data.
+
+Has a function analyzeSentiment(String company) that returns SentimentResult.
+
+Returns a SentimentResult object that includes the company name, a sentiment score (1–5), and a sentiment label (“positive,” “neutral,” or “negative”)
+
+Data is generated locally to simulate responses, but the structure allows for easy integration with an external API in the future.
+
+Example outputs: 
+```
+{"company":"Amazon","sentimentScore":4,"sentimentLabel":"positive"}
+{"company":"Meta","sentimentScore":3,"sentimentLabel":"neutral"}
+```
+
+To test the endpoint:
+```
+cd service
+mvn spring-boot:run
+```
+
+In another terminal run 
+```curl -i "http://localhost:8080/market/sentiment?symbol=AMZN"``` or ```http://localhost:8080/market/sentiment?symbol=AMZN``` in the browser.
+
+The API will return a JSON response with the sentiment score and label for the specified company.
 
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
@@ -53,7 +77,14 @@ To run our unit tests (located under the directory `src/test`), run the followin
 mvn clean test
 ```
 
-## Endpoints [TODO]
+## Endpoints
+
+```GET /market/daily``` — Returns cached-or-fresh Alpha Vantage daily OHLCV for the ticker (AMZN)
+
+```GET /market/predict``` — Runs the placeholder forecast over the latest daily series (AMZN), returning a simple prediction map
+
+```GET /market/sentiment``` — Returns a placeholder news-sentiment payload (AMZN), with optional force to bypass cache.
+
 
 ## Style Checking Report [TODO]
 The tool "checkstyle" is used to check the style of our code and generate style checking reports. 
@@ -64,14 +95,17 @@ The following code can be run in terminal to check the checkstyle report.
 
 Results: [dont have yet]
 
-## Branch Coverage Report [TODO]
+## Branch Coverage Report
 JaCoCo was used to perform branch analysis in order to see the branch coverage.
 The following code can be run in terminal to check the checkstyle report.
 1. `mvn clean test`
 2. `mvn jacoco:report`
 3. `open ./target/site/jacoco/index.html`
 
-Results: [dont have yet]
+Results: 
+<img width="1401" height="366" alt="image" src="https://github.com/user-attachments/assets/131cbb07-2b81-48c7-85f9-8a1747bd8ab2" />
+<img width="1417" height="327" alt="image" src="https://github.com/user-attachments/assets/4dcec872-486a-4fe6-ba6e-0e20cf18c47e" />
+
 
 ## Static Code Analysis [TODO]
 PMD was used to perform static analysis on the codebase.
@@ -86,12 +120,10 @@ Results: [dont have yet]
 ## Summary of Tools Used
 - [Alpha Vantage](https://www.alphavantage.co/): Used for retrieving relevant stock data.
 - [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
+- [Jira](https://p2km.atlassian.net/jira/software/projects/BTS/boards/1): Used for managing timeline and project tasks
 
 ## AI Disclosure
-
 We used the free version of ChatGPT to assist with debugging, drafting unit test, and wording.
-
-## Third Party Documentation [TODO maybe??]
 
 
 

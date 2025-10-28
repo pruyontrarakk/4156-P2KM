@@ -1,15 +1,10 @@
 package com.example.market.service.forecast;
 
-
 import com.example.market.service.forecast.python.PythonService;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
 
-/**
- * This class defines the Forecast Data Service. It defines
- * useful methods for predicting future stock prices and trends.
- */
 @Service
 public class ForecastDataService {
   /**
@@ -36,5 +31,4 @@ public class ForecastDataService {
   public Map<String, String> predictFuturePrices(final String companyName) {
     return pythonService.predictFuturePrices();
   }
-
 }
