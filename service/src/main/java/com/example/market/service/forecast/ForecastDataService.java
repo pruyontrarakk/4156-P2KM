@@ -14,7 +14,18 @@ public class ForecastDataService {
   private final PythonService pythonService;
 
   /**
-   * Constructs a new {@code ForecastDataService}.
+   * Creates a new {@code ForecastDataService} that uses the specified
+   * {@link PythonService} instance to perform forecast computations.
+   *
+   * @param pythonService the {@code PythonService} instance to use; must not be {@code null}
+   */
+  public ForecastDataService(PythonService pythonService) {
+    this.pythonService = pythonService;
+  }
+
+  /**
+   * Creates a new {@code ForecastDataService} with its own internally
+   * constructed {@link PythonService}.
    */
   public ForecastDataService() {
     this.pythonService = new PythonService();
@@ -29,6 +40,6 @@ public class ForecastDataService {
    *                    (also as a {@code String})
    */
   public Map<String, String> predictFuturePrices(final String companyName) {
-    return pythonService.predictFuturePrices();
+    return pythonService.predictFuturePrices(companyName);
   }
 }
