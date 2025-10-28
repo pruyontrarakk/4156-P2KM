@@ -18,17 +18,34 @@ public class JsonStore {
   private final ObjectMapper mapper = new ObjectMapper();
 
   /**
-   * The root directory under which all data files (such as news, forecasts, and stock data)
+   * The root directory under which all data files
+   * (such as news, forecasts, and stock data)
    * are stored or retrieved.
    */
   private final Path base = Paths.get("data"); // repo-root/data
 
-  /** data/stocks/<symbol>-daily.json */
+  /**
+   * Returns the file system path to the daily stock data file
+   * for the specified symbol.
+   *
+   * @param symbol the stock or asset symbol whose daily data
+   *               file path is to be returned
+   * @return the {@link Path} to the JSON file containing daily
+   * stock data for the given symbol
+   */
   public Path dailyPath(final String symbol) {
     return base.resolve(Paths.get("stocks", norm(symbol) + "-daily.json"));
   }
 
-  /** data/news/<symbol>.json */
+  /**
+   * Returns the file system path to the news data file
+   * for the specified symbol.
+   *
+   * @param symbol the stock or asset symbol whose news file path
+   *               is to be returned
+   * @return the {@link Path} to the JSON file containing news data
+   * for the given symbol
+   */
   public Path newsPath(final String symbol) {
     return base.resolve(Paths.get("news", norm(symbol) + ".json"));
   }
