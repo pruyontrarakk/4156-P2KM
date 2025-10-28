@@ -75,13 +75,28 @@ public class PythonService {
     return result;
   }
 
+  /**
+   * Predicts future stock prices by invoking the TrendMaster model.
+   *
+   * @return a {@code Map} where each key is a date string
+   *         and each value is the predicted price for that date
+   */
   public Map<String, String> predictFuturePrices() {
     String trendMasterResponse = runTrendMaster();
-//    Map<String, String> parsed = parseTrendMasterResponse(trendMasterResponse);
+//    Map<String, String> parsed = parseTrendMasterResponse(
+//    trendMasterResponse);
     return parseTrendMasterResponse(trendMasterResponse);
   }
 
-  private Map<String, String> parseTrendMasterResponse(String response) {
+  /**
+   * Parses predictions made from TrendMaster model.
+   *
+   * @param response An {@code String} representing the standard output
+   *                 from python script.
+   * @return a {@code Map} where each key is a date string
+   *         and each value is the predicted price for that date
+   */
+  private Map<String, String> parseTrendMasterResponse(final String response) {
     Map<String, String> result = new HashMap<>();
     ObjectMapper mapper = new ObjectMapper();
     try {
@@ -95,8 +110,9 @@ public class PythonService {
       JsonNode dateNode = rootNode.get("Date");
       JsonNode predictionNode = rootNode.get("Predicted_Close");
 
-      for(int i = 0; i < dateNode.size(); i++) {
-        result.put(dateNode.get(Integer.toString(i)).asText(), predictionNode.get(Integer.toString(i)).asText());
+      for (int i = 0; i < dateNode.size(); i++) {
+        result.put(dateNode.get(Integer.toString(i)).asText(),
+                predictionNode.get(Integer.toString(i)).asText());
       }
 
     } catch (JsonProcessingException e) {

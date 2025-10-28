@@ -17,10 +17,11 @@ public class ForecastDataService {
    * Creates a new {@code ForecastDataService} that uses the specified
    * {@link PythonService} instance to perform forecast computations.
    *
-   * @param pythonService the {@code PythonService} instance to use; must not be {@code null}
+   * @param pyService the {@code PythonService} instance to use;
+   *                  must not be {@code null}
    */
-  public ForecastDataService(PythonService pythonService) {
-    this.pythonService = pythonService;
+  public ForecastDataService(final PythonService pyService) {
+    this.pythonService = pyService;
   }
 
   /**
