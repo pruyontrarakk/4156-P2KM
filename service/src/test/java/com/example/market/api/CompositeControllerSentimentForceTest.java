@@ -52,7 +52,7 @@ class CompositeControllerSentimentForceTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.company", is("AMZN")))
         .andExpect(jsonPath("$.sentimentLabel", is("very negative")))
-        .andExpect(jsonPath("$.source", is("news-placeholder")));
+        .andExpect(jsonPath("$.source", is("HuggingFaceModel")));
 
     // verify the controller wrote the fresh payload
     verify(store).write(eq(cache), any(Map.class));

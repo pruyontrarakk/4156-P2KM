@@ -40,26 +40,57 @@ mvn spring-boot:run
 curl -i "http://localhost:8080/market/daily?symbol=AMZN"
 ```
 ### 2. NewsDataService
-Service analyzing the media sentiment for a given company based on recent news and media data.
+The NewsDataService handles sentiment analysis for a given company using a local Hugging Face model.
+The service runs a Python script (sentiment_model.py) that uses the model nlptown/bert-base-multilingual-uncased-sentiment. 
+This model analyzes generated text about the company and returns a sentiment score between 1 (very negative) and 5 (very positive), along with a descriptive label.
 
-Has a function analyzeSentiment(String company) that returns SentimentResult.
+When /market/sentiment is called, the controller sends the request to NewsDataService, which then calls SentimentPythonService.
+That service runs the Python script, which loads the Hugging Face model and produces a short JSON result.
+The JSON is parsed in Java and returned through the API.
 
-Returns a SentimentResult object that includes the company name, a sentiment score (1–5), and a sentiment label (“positive,” “neutral,” or “negative”)
+API endpoint:
+GET /market/sentiment
+Query parameters:
+symbol – optional; the company name or stock ticker to analyze (default is AMZN)
+force – optional; set to true to bypass cached results and run a fresh analysis
 
-Data is generated locally to simulate responses, but the structure allows for easy integration with an external API in the future.
+Example requests:
+http://localhost:8080/market/sentiment
+http://localhost:8080/market/sentiment?symbol=TSLA
+http://localhost:8080/market/sentiment?symbol=META&force=true
 
-Example outputs: 
-{"company":"Amazon","sentimentScore":4,"sentimentLabel":"positive"}
-{"company":"Meta","sentimentScore":3,"sentimentLabel":"neutral"}
+Example response:
 
-To test the endpoint:
+{
+  "company": "AMZN",
+  "sentimentScore": 4,
+  "sentimentLabel": "positive",
+  "source": "HuggingFaceModel"
+}
+
+How to test it:
+
+Start the service:
 cd service
 mvn spring-boot:run
 
-In another terminal run curl -i "http://localhost:8080/market/sentiment?symbol=AMZN" or http://localhost:8080/market/sentiment?symbol=AMZN in the browser. 
+In another terminal or your browser, go to:
+http://localhost:8080/market/sentiment?symbol=AMZN
+The endpoint will return a JSON object with the sentiment score and label.
 
-The API will return a JSON response with the sentiment score and label for the specified company.
+Setting up the Python environment (first time only):
 
+The sentiment model runs through a Python script.
+If you haven’t set it up yet, do this once:
+
+cd service/src/main/java/com/example/market/service/news/python
+python3 -m venv venv
+source venv/bin/activate
+pip install transformers torch
+python3 sentiment_model.py AMZN
+
+This installs the required libraries and downloads the model.
+After that, Spring Boot can call it automatically for future requests.
 
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 

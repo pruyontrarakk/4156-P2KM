@@ -72,32 +72,35 @@ public final class CompositeController {
     }
   }
 
-  /** Returns (and caches) placeholder news sentiment for AMZN. */
   @GetMapping("/sentiment")
-  public ResponseEntity<?> getSentiment(@RequestParam(required = false) String symbol,
-                                        @RequestParam(defaultValue = "false") boolean force) {
-    try {
-      final String s = DEFAULT_SYMBOL;
-      final Path cache = store.newsPath(s);
-      if (!force && isFresh(cache, NEWS_CACHE_TTL)) {
-        return ResponseEntity.ok(store.read(cache, Map.class));
-      }
-      var result = news.analyzeSentiment(s); // placeholder returns a POJO
-      // persist as generic Map for simplicity in the cache
-      Map<String, Object> payload = Map.of(
-          "company", result.getCompany(),
-          "sentimentScore", result.getSentimentScore(),
-          "sentimentLabel", result.getSentimentLabel(),
-          "source", "news-placeholder"
-      );
-      store.write(cache, payload);
-      return ResponseEntity.ok(payload);
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
-    } catch (Exception e) {
-      return ResponseEntity.status(502).body(jsonError(e.getMessage()));
+public ResponseEntity<?> getSentiment(@RequestParam(required = false) String symbol,
+                                      @RequestParam(defaultValue = "false") boolean force) {
+  try {
+    final String s = (symbol == null || symbol.isBlank()) ? DEFAULT_SYMBOL : symbol;
+    final Path cache = store.newsPath(s);
+    if (!force && isFresh(cache, NEWS_CACHE_TTL)) {
+      return ResponseEntity.ok(store.read(cache, Map.class));
     }
+
+    // call your new NewsDataService (it reads the key inside itself)
+    var result = news.analyzeSentiment(s.toUpperCase());
+
+    Map<String, Object> payload = Map.of(
+        "company", result.getCompany(),
+        "sentimentScore", result.getSentimentScore(),
+        "sentimentLabel", result.getSentimentLabel(),
+        "source", "HuggingFaceModel"
+    );
+
+    store.write(cache, payload);
+    return ResponseEntity.ok(payload);
+
+  } catch (IllegalArgumentException e) {
+    return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
+  } catch (Exception e) {
+    return ResponseEntity.status(502).body(jsonError(e.getMessage()));
   }
+}
 
   /* ---------------- helpers ---------------- */
 

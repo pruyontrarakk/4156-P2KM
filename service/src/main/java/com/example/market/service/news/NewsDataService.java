@@ -6,27 +6,18 @@ import org.springframework.stereotype.Service;
 @Service
 public class NewsDataService {
 
-  // Eventually this can call MediastackService for real data
-  public SentimentResult analyzeSentiment(String company) {
-    // Placeholder logic for now
-    int score;
-    String label;
+    private final SentimentPythonService sentimentPythonService;
 
-    switch (company.toLowerCase()) {
-      case "amzn":
-      case "amazon":
-        score = 4;
-        label = "positive";
-        break;
-      case "meta":
-        score = 3;
-        label = "neutral";
-        break;
-      default:
-        score = 2;
-        label = "negative";
+    public NewsDataService(SentimentPythonService sentimentPythonService) {
+        this.sentimentPythonService = sentimentPythonService;
     }
 
-    return new SentimentResult(company, score, label);
-  }
+    // No-arg fallback constructor for compatibility
+    public NewsDataService() {
+        this.sentimentPythonService = new SentimentPythonService();
+    }
+
+    public SentimentResult analyzeSentiment(String company) throws Exception {
+        return sentimentPythonService.analyzeSentiment(company);
+    }
 }
