@@ -7,20 +7,40 @@ import java.util.Map;
 
 @Service
 public class ForecastDataService {
-
+  /**
+   * Service responsible for executing Python-based forecasting scripts
+   * and returning their parsed prediction results.
+   */
   private final PythonService pythonService;
 
-  // Primary constructor for DI (and for tests to pass a mock)
-  public ForecastDataService(PythonService pythonService) {
-    this.pythonService = pythonService;
+  /**
+   * Creates a new {@code ForecastDataService} that uses the specified
+   * {@link PythonService} instance to perform forecast computations.
+   *
+   * @param pyService the {@code PythonService} instance to use;
+   *                  must not be {@code null}
+   */
+  public ForecastDataService(final PythonService pyService) {
+    this.pythonService = pyService;
   }
 
-  // If some old code calls no-arg ctor, keep this fallback; remove if not needed.
+  /**
+   * Creates a new {@code ForecastDataService} with its own internally
+   * constructed {@link PythonService}.
+   */
   public ForecastDataService() {
-    this.pythonService = new com.example.market.service.forecast.python.PythonService();
+    this.pythonService = new PythonService();
   }
 
-  public Map<String, String> predictFuturePrices(String companyName) {
+  /**
+   * Predicts what the stock price will be over the course of 10 days.
+   *
+   * @param companyName A {@code String} object containing the company name
+   * @return a {@code Map} where each key is a date (as a {@code String}) and
+   *                    each value is the corresponding predicted closing price
+   *                    (also as a {@code String})
+   */
+  public Map<String, String> predictFuturePrices(final String companyName) {
     return pythonService.predictFuturePrices(companyName);
   }
 }
