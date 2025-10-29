@@ -2,27 +2,49 @@ package com.example.market.service.news;
 
 import com.example.market.model.news.SentimentResult;
 import org.junit.jupiter.api.Test;
+
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 public class newsUnitTest {
 
     @Test
-    public void testAnalyzeSentiment() {
-        NewsDataService newsService = new NewsDataService();
+    public void testAnalyzeSentiment_withMockedPythonService() throws Exception {
+        // Create a mock of the Python service
+        SentimentPythonService mockPythonService = mock(SentimentPythonService.class);
 
-        // Test Amazon
+        // Define mock responses
+        when(mockPythonService.analyzeSentiment("Amazon"))
+                .thenReturn(new SentimentResult("Amazon", 4, "positive"));
+        when(mockPythonService.analyzeSentiment("Meta"))
+                .thenReturn(new SentimentResult("Meta", 3, "neutral"));
+        when(mockPythonService.analyzeSentiment("Tesla"))
+                .thenReturn(new SentimentResult("Tesla", 2, "negative"));
+
+        // Inject the mock into the NewsDataService
+        NewsDataService newsService = new NewsDataService(mockPythonService);
+
+        // Verify results for Amazon
         SentimentResult amazon = newsService.analyzeSentiment("Amazon");
+        assertEquals("Amazon", amazon.getCompany());
         assertEquals(4, amazon.getSentimentScore());
         assertEquals("positive", amazon.getSentimentLabel());
 
-        // Test Meta
+        // Verify results for Meta
         SentimentResult meta = newsService.analyzeSentiment("Meta");
+        assertEquals("Meta", meta.getCompany());
         assertEquals(3, meta.getSentimentScore());
         assertEquals("neutral", meta.getSentimentLabel());
 
-        // Test a company not listed (should be negative)
+        // Verify results for Tesla
         SentimentResult tesla = newsService.analyzeSentiment("Tesla");
+        assertEquals("Tesla", tesla.getCompany());
         assertEquals(2, tesla.getSentimentScore());
         assertEquals("negative", tesla.getSentimentLabel());
+
+        // Confirm that the mock was called exactly once per company
+        verify(mockPythonService, times(1)).analyzeSentiment("Amazon");
+        verify(mockPythonService, times(1)).analyzeSentiment("Meta");
+        verify(mockPythonService, times(1)).analyzeSentiment("Tesla");
     }
 }

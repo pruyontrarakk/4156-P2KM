@@ -164,7 +164,26 @@ public final class CompositeController {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
               .body(jsonError(e.getMessage()));
     }
+
+    // call your new NewsDataService (it reads the key inside itself)
+    var result = news.analyzeSentiment(s.toUpperCase());
+
+    Map<String, Object> payload = Map.of(
+        "company", result.getCompany(),
+        "sentimentScore", result.getSentimentScore(),
+        "sentimentLabel", result.getSentimentLabel(),
+        "source", "HuggingFaceModel"
+    );
+
+    store.write(cache, payload);
+    return ResponseEntity.ok(payload);
+
+  } catch (IllegalArgumentException e) {
+    return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
+  } catch (Exception e) {
+    return ResponseEntity.status(502).body(jsonError(e.getMessage()));
   }
+}
 
   /* ---------------- helpers ---------------- */
 

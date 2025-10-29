@@ -4,7 +4,7 @@ import com.example.market.model.news.SentimentResult;
 import org.springframework.stereotype.Service;
 import java.util.Random;
 
-@Service
+// @Service
 public class MediastackService {
 
     private static final String[] LABELS = {

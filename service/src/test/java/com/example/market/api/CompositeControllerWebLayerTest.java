@@ -124,7 +124,7 @@ class CompositeControllerWebLayerTest {
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.company").value("AMZN"))
         .andExpect(jsonPath("$.sentimentLabel").value("positive"))
-        .andExpect(jsonPath("$.source").value("news-placeholder"));
+        .andExpect(jsonPath("$.source").value("HuggingFaceModel"));
 
     verify(store).write(eq(newsCache), Mockito.<Map<String, Object>>argThat(m ->
         "AMZN".equals(m.get("company")) && "positive".equals(m.get("sentimentLabel"))));
