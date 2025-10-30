@@ -13,7 +13,7 @@ import org.springframework.stereotype.Service;
  * This class defines the Python Service. It defines useful methods
  * for running python scripts, particularly stock prediction scripts.
  */
-@Service
+@Service("pythonService")
 public class PythonService {
   /**
    * Constructs a new {@code PythonService}.
