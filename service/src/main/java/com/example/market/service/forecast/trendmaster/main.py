@@ -28,7 +28,7 @@ predictions = inferencer.predict(
     from_date=from_date,
     to_date=to_date,
     input_window=30,
-    future_steps=10
+    future_steps=10#hardcoded for iteration 1
 )
 #print(predictions.to_json(), flush=True)
 predictions['Date'] = predictions['Date'].dt.strftime('%Y-%m-%d')
