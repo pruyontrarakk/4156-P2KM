@@ -9,7 +9,7 @@ on:
       - main
 defaults:
   run:
-    working-directory: ./service
+    working-directory: service
 jobs:
 
   test:
