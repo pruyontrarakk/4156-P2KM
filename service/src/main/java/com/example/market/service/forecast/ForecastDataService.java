@@ -13,7 +13,7 @@ public class ForecastDataService {
    * Service responsible for executing Python-based forecasting scripts
    * and returning their parsed prediction results.
    */
-  @Qualifier("trendmasterPythonService") 
+  @Qualifier("trendmasterPythonService")
   private final PythonService pythonService;
 
   /**

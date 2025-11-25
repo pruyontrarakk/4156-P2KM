@@ -12,12 +12,23 @@ import java.util.stream.Collectors;
 @Service
 public class SentimentPythonService implements SentimentAnalysisPort {
 
+    /**
+     * Calls upon Python model to get sentiment rating.
+     *
+     * @param companyName the name of the company for
+     *                    which sentiment is being requested;
+     * @return a {@link SentimentResult} containing the company name,
+     *                   a generated sentiment score (1–5),
+     *                   and the associated sentiment label
+     */
     @Override
-    public SentimentResult analyzeSentiment(String companyName) throws Exception {
+    public SentimentResult analyzeSentiment(final String companyName)
+            throws Exception {
         // Run the Python script and capture JSON output
         ProcessBuilder pb = new ProcessBuilder(
                 "python3",
-                "src/main/java/com/example/market/service/news/python/sentiment_model.py",
+                "src/main/java/com/example/market/service/news/python/"
+                + "sentiment_model.py",
                 companyName
         );
         pb.redirectErrorStream(true);
@@ -35,11 +46,15 @@ public class SentimentPythonService implements SentimentAnalysisPort {
             throw new RuntimeException("Python process failed: " + output);
         }
 
-        // Filter for the JSON line only (ignore "Device set to use cpu" or warnings)
+        // Filter for the JSON line only
+        // (ignore "Device set to use cpu" or warnings)
         String jsonLine = output.lines()
-                .filter(line -> line.trim().startsWith("{") && line.trim().endsWith("}"))
+                .filter(line -> line.trim().startsWith("{")
+                        && line.trim().endsWith("}"))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("No JSON output found from Python script"));
+                .orElseThrow(() -> new RuntimeException(
+                        "No JSON output found from Python script"
+                ));
 
         // Parse JSON safely with Jackson
         ObjectMapper mapper = new ObjectMapper();
