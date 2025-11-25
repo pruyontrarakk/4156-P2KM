@@ -7,7 +7,9 @@ on:
   push:
     branches:
       - main
-
+defaults:
+  run:
+    working-directory: service
 jobs:
 
   test:
@@ -15,20 +17,20 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v1
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Debug Toolchains
+        run: cat ~/.m2/toolchains.xml || echo "No toolchains.xml found"
       - name: Compile
-        run: |
-          cd service
-          mvn compile
+        run: mvn compile
       - name: Style Checking
-        run: |
-          cd service
-          mvn checkstyle:check
+        run: mvn checkstyle:check
       - name: Unit Tests and Coverage
-        run: |
-          cd service
-          mvn clean install
+        run: mvn clean install
       - name: Static Analysis
-        run: |
-          cd service
-          mvn clean pmd:check
+        run: mvn clean pmd:check
