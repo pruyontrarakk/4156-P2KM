@@ -122,15 +122,18 @@
             <goals><goal>report</goal></goals>
           </execution>
           <execution>
-            <id>check</id>
-            <goals><goal>check</goal></goals>
+            <id>check-coverage</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>check</goal>
+            </goals>
             <configuration>
               <rules>
                 <rule>
                   <element>BUNDLE</element>
                   <limits>
                     <limit>
-                      <counter>INSTRUCTION</counter>
+                      <counter>BRANCH</counter>
                       <value>COVEREDRATIO</value>
                       <minimum>0.60</minimum>
                     </limit>
@@ -146,6 +149,13 @@
       <plugin>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-maven-plugin</artifactId>
+      </plugin>
+
+      <!-- PMD -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-pmd-plugin</artifactId>
+        <version>3.28.0</version>
       </plugin>
     </plugins>
   </build>

@@ -1,0 +1,34 @@
+name: Testing, Stylecheck, Static Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+jobs:
+
+  test:
+    name: Testing, Stylecheck, Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v1
+      - name: Compile
+        run: |
+          cd service
+          mvn compile
+      - name: Style Checking
+        run: |
+          cd service
+          mvn checkstyle:check
+      - name: Unit Tests and Coverage
+        run: |
+          cd service
+          mvn clean install
+      - name: Static Analysis
+        run: |
+          cd service
+          mvn clean pmd:check
