@@ -22,8 +22,6 @@ jobs:
         with:
           java-version: 21
           distribution: 'temurin'
-      - name: Show Toolchain
-        run: cat /home/runner/.m2/toolchains.xml
       - name: Compile
         run: mvn compile
       - name: Style Checking
