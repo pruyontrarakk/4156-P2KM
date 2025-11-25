@@ -23,7 +23,6 @@ jobs:
         uses: actions/setup-java@v4
         with:
           java-version: 21
-          distribution: 'temurin'
       - name: Compile
         run: mvn compile
       - name: Style Checking
