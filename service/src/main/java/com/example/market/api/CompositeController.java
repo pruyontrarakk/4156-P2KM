@@ -7,10 +7,11 @@ import com.example.market.service.stock.JsonStore;
 import com.example.market.service.stock.StockDataService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
+
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -38,14 +39,13 @@ public final class CompositeController {
   private static final Duration NEWS_CACHE_TTL  = Duration.ofHours(6);
 
   /**
-   * Creates a new {@code CompositeController} that coordinates stock, forecast,
-   * and news data services with shared JSON storage.
+   * All args constructor.
    *
-   * @param thisStocks   the stock data service {@code StockDataService}
-   * @param thisForecast the forecast data service {@code ForecastDataService}
-   * @param thisNews     the news data service {@code NewsDataService}
-   * @param thisStore    the JSON storage service {@code JsonStore}
-   */
+   * @param thisStocks a StockDataService object
+   * @param thisForecast a ForecastService object
+   * @param thisNews a NewsDataService object
+   * @param thisStore a JsonStore object
+   * */
   public CompositeController(final StockDataService thisStocks,
                              final ForecastDataService thisForecast,
                              final NewsDataService thisNews,
@@ -57,16 +57,15 @@ public final class CompositeController {
   }
 
   /**
-   * Returns daily OHLCV for AMZN (hardcoded for iteration 1).
+   * Retrieves the daily OHLCV (Open–High–Low–Close–Volume) data
+   * for the given stock symbol.
    *
-   *  @param symbol the stock or asset symbol to analyze sentiment for;
-   *                may be {@code null} if sentiment should be computed
-   *                for a default or global context
-   *  @param force whether to force recomputation of sentiment rather than
-   *               using cached results
-   *  @return a {@link ResponseEntity} containing the present info about a
-   *              company's stock or an appropriate error response if the
-   *              request cannot be processed
+   * @param symbol  optional stock symbol to predict;
+   *                defaults to a predefined value if omitted
+   * @param force  whether to bypass the cache
+   *               and fetch a fresh daily series
+   * @return a JSON response containing the daily OHLCV series
+   *                or an error description
    */
   @GetMapping("/daily")
   public ResponseEntity<?> getDaily(@RequestParam(required = false)
@@ -85,19 +84,17 @@ public final class CompositeController {
   }
 
   /**
-   * Returns placeholder prediction for AMZN (hardcoded),
-   * ensuring data is cached/fresh.
+   * Generates a stock price prediction for the given symbol
+   * and forecast horizon.
    *
-   *  @param symbol the stock or asset symbol to analyze sentiment for;
-   *                may be {@code null} if sentiment should be computed
-   *                for a default or global context
-   * @param horizon the prediction time frame (e.g. {@code "weekly"});
-   *                defaults to {@code "next-day"}
-   *  @param force whether to force recomputation of sentiment rather than
-   *               using cached results
-   *  @return a {@link ResponseEntity} containing the predicted stock prices
-   *              or an appropriate error response if the
-   *              request cannot be processed
+   * @param symbol  optional stock symbol to predict;
+   *                defaults to a predefined value if omitted
+   * @param horizon forecast range (e.g., {@code "next-day"});
+   *                determines the prediction scope
+   * @param force   whether to bypass cached market data
+   *                and fetch fresh values
+   * @return a JSON response containing the prediction results
+   *                or an error description
    */
   @GetMapping("/predict")
   public ResponseEntity<?> predict(@RequestParam(required = false)
@@ -110,7 +107,6 @@ public final class CompositeController {
       StockDailySeries series = getDailySeries(DEFAULT_SYMBOL, force);
       Map<String, String> map = forecast
               .predictFuturePrices(DEFAULT_SYMBOL); // placeholder
-
       return ResponseEntity.ok(Map.of(
           "symbol", DEFAULT_SYMBOL,
           "horizon", horizon,
@@ -118,7 +114,8 @@ public final class CompositeController {
           "source", series.getSource()
       ));
     } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
+      return ResponseEntity.badRequest()
+              .body(jsonError(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
               .body(jsonError(e.getMessage()));
@@ -126,17 +123,14 @@ public final class CompositeController {
   }
 
   /**
-   * Retrieves sentiment analysis results for the specified stock symbol.
+   * Retrieves sentiment analysis results for the default symbol.
    *
-   *  @param symbol the stock or asset symbol to analyze sentiment for;
-   *                may be {@code null} if sentiment should be computed
-   *                for a default or global context
-   *  @param force whether to force recomputation of sentiment rather than
-   *               using cached results
-   *  @return a {@link ResponseEntity} containing the sentiment analysis
-   *              results or an appropriate error response if the
-   *              request cannot be processed
-   */
+   * @param symbol symbol representing company name.
+   * @param force a Boolean value determining if method uses the cache
+   *              or forcefully run analysis again.
+   * @return a JSON response containing sentiment data
+   *              or an error response on failure
+   **/
   @GetMapping("/sentiment")
   public ResponseEntity<?> getSentiment(@RequestParam(required = false)
                                           final String symbol,
@@ -145,58 +139,65 @@ public final class CompositeController {
     try {
       final String s = DEFAULT_SYMBOL;
       final Path cache = store.newsPath(s);
+
       if (!force && isFresh(cache, NEWS_CACHE_TTL)) {
         return ResponseEntity.ok(store.read(cache, Map.class));
       }
+
       var result = news.analyzeSentiment(s); // placeholder returns a POJO
+
       // persist as generic Map for simplicity in the cache
       Map<String, Object> payload = Map.of(
           "company", result.getCompany(),
           "sentimentScore", result.getSentimentScore(),
           "sentimentLabel", result.getSentimentLabel(),
-          "source", "news-placeholder"
+          "source", "HuggingFaceModel"
       );
       store.write(cache, payload);
       return ResponseEntity.ok(payload);
+
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
     } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-              .body(jsonError(e.getMessage()));
+      return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
+              jsonError(e.getMessage())
+      );
     }
   }
 
   /* ---------------- helpers ---------------- */
 
-private StockDailySeries getDailySeries(final String symbol,
-                                        final boolean force) throws Exception {
-  if (symbol == null || symbol.isBlank()) {
-    throw new IllegalArgumentException("symbol is required");
+  private StockDailySeries getDailySeries(final String symbol,
+                                          final boolean force)
+          throws Exception {
+    if (symbol == null || symbol.isBlank()) {
+      throw new IllegalArgumentException("symbol is required");
+    }
+
+    final Path cache = store.dailyPath(symbol);
+
+    // 1) Cache-first: if fresh and not forced
+    // return without needing an API key.
+    if (!force && isFresh(cache, DAILY_CACHE_TTL)) {
+      return store.read(cache, StockDailySeries.class);
+    }
+
+    // 2) Now require a key (env var, system property fallback for tests/CI).
+    String key = System.getenv("ALPHAVANTAGE_API_KEY");
+    if (key == null || key.isBlank()) {
+      key = System.getProperty("alphavantage.api.key", "");
+    }
+    if (key.isBlank()) {
+      throw new IllegalStateException(
+              "missing ALPHAVANTAGE_API_KEY (or -Dalphavantage.api.key)"
+      );
+    }
+
+    // 3) Fetch & persist.
+    StockDailySeries fresh = stocks.fetchDaily(symbol, key);
+    store.write(cache, fresh);
+    return fresh;
   }
-
-  final Path cache = store.dailyPath(symbol);
-
-  // 1) Cache-first: if fresh and not forced, return without needing an API key.
-  if (!force && isFresh(cache, DAILY_CACHE_TTL)) {
-    return store.read(cache, StockDailySeries.class);
-  }
-
-  // 2) Now require a key (env var, system property fallback for tests/CI).
-  String key = System.getenv("ALPHAVANTAGE_API_KEY");
-  if (key == null || key.isBlank()) {
-    key = System.getProperty("alphavantage.api.key", "");
-  }
-  if (key.isBlank()) {
-    throw new IllegalStateException(
-            "missing ALPHAVANTAGE_API_KEY (or -Dalphavantage.api.key)");
-  }
-
-  // 3) Fetch & persist.
-  StockDailySeries fresh = stocks.fetchDaily(symbol, key);
-  store.write(cache, fresh);
-  return fresh;
-}
-
 
   private static boolean isFresh(final Path file, final Duration ttl) {
     try {

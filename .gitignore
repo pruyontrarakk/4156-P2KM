@@ -20,3 +20,5 @@ data/**/*.json
 
 # Maven wrapper jar 
 .mvn/wrapper/maven-wrapper.jar
+service/src/main/java/com/example/market/service/news/python/venv*/
+service/venv/

@@ -1,6 +1,8 @@
 package com.example.market.service.forecast;
 
 import com.example.market.service.forecast.python.PythonService;
+
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -11,6 +13,7 @@ public class ForecastDataService {
    * Service responsible for executing Python-based forecasting scripts
    * and returning their parsed prediction results.
    */
+  @Qualifier("trendmasterPythonService")
   private final PythonService pythonService;
 
   /**

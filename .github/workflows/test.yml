@@ -1,0 +1,36 @@
+name: Testing, Stylecheck, Static Analysis
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+defaults:
+  run:
+    working-directory: service
+jobs:
+
+  test:
+    name: Testing, Stylecheck, Static Analysis
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: 21
+          distribution: 'temurin'
+      - name: Debug Toolchains
+        run: cat ~/.m2/toolchains.xml || echo "No toolchains.xml found"
+      - name: Compile
+        run: mvn compile
+      - name: Style Checking
+        run: mvn checkstyle:check
+      - name: Unit Tests and Coverage
+        run: mvn clean install
+      - name: Static Analysis
+        run: mvn clean pmd:check
