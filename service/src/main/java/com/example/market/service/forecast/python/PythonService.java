@@ -44,12 +44,13 @@ public class PythonService {
    */
   public String runTrendMaster() {
     String result = "";
+    StringBuilder allOutput = new StringBuilder();
     try {
 
       ProcessBuilder pb = new ProcessBuilder(
               "/bin/bash", "-c",
-              "pip install --quiet trendmaster && "
-              + "python src/main/java/com/example/market/service/forecast/"
+              "python3 -m pip install --quiet trendmaster && "
+              + "python3 src/main/java/com/example/market/service/forecast/"
               + "trendmaster/main.py"
       );
       pb.redirectErrorStream(true);
@@ -60,15 +61,25 @@ public class PythonService {
       String lastLine = null;
       String line;
       while ((line = reader.readLine()) != null) {
+        allOutput.append(line).append("\n");
         lastLine = line;
       }
+      
+      int exitCode = process.waitFor();
+      
+      if (exitCode != 0) {
+        throw new RuntimeException("Python script failed with exit code " 
+            + exitCode + ". Output: " + allOutput.toString());
+      }
+      
       if (lastLine == null) {
-        throw new RuntimeException("No output from Python script.");
+        throw new RuntimeException("No output from Python script. "
+            + "Full output: " + allOutput.toString());
       }
       result = lastLine;
-      process.waitFor();
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new RuntimeException("Failed to run TrendMaster script: " 
+          + e.getMessage() + ". Output: " + allOutput.toString(), e);
     }
 
     return result;
@@ -86,6 +97,18 @@ public class PythonService {
    *                 or produces no output
    */
   private Map<String, String> parseTrendMasterResponse(final String response) {
+    if (response == null || response.trim().isEmpty()) {
+      throw new RuntimeException("Empty response from Python script");
+    }
+    
+    // Check if response looks like JSON (should start with { or ")
+    String trimmed = response.trim();
+    if (!trimmed.startsWith("{") && !trimmed.startsWith("\"")) {
+      throw new RuntimeException("Python script output is not valid JSON. "
+          + "Response starts with: " + (trimmed.length() > 50 
+          ? trimmed.substring(0, 50) + "..." : trimmed));
+    }
+    
     Map<String, String> result = new HashMap<>();
     ObjectMapper mapper = new ObjectMapper();
     try {
@@ -99,13 +122,19 @@ public class PythonService {
       JsonNode dateNode = rootNode.get("Date");
       JsonNode predictionNode = rootNode.get("Predicted_Close");
 
+      if (dateNode == null || predictionNode == null) {
+        throw new RuntimeException("Missing 'Date' or 'Predicted_Close' in JSON response");
+      }
+
       for (int i = 0; i < dateNode.size(); i++) {
         result.put(dateNode.get(Integer.toString(i)).asText(),
                 predictionNode.get(Integer.toString(i)).asText());
       }
 
     } catch (JsonProcessingException e) {
-      throw new RuntimeException(e);
+      throw new RuntimeException("Failed to parse JSON from Python script. "
+          + "Response: " + (response.length() > 200 
+          ? response.substring(0, 200) + "..." : response), e);
     }
 
     return result;

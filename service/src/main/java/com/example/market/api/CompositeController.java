@@ -1,6 +1,8 @@
 package com.example.market.api;
 
+import com.example.market.model.news.SentimentResult;
 import com.example.market.model.stock.StockDailySeries;
+import com.example.market.service.analysis.AdjustedPredictionService;
 import com.example.market.service.forecast.ForecastDataService;
 import com.example.market.service.news.NewsDataService;
 import com.example.market.service.stock.JsonStore;
@@ -28,6 +30,8 @@ public final class CompositeController {
   private final ForecastDataService forecast;
   /** Service for retrieving and processing news data. */
   private final NewsDataService news;
+  /** Service for adjusting predictions with sentiment analysis. */
+  private final AdjustedPredictionService adjustedPrediction;
   /** JSON-backed cache or storage handler. */
   private final JsonStore store;
 
@@ -44,15 +48,18 @@ public final class CompositeController {
    * @param thisStocks a StockDataService object
    * @param thisForecast a ForecastService object
    * @param thisNews a NewsDataService object
+   * @param thisAdjustedPrediction an AdjustedPredictionService object
    * @param thisStore a JsonStore object
    * */
   public CompositeController(final StockDataService thisStocks,
                              final ForecastDataService thisForecast,
                              final NewsDataService thisNews,
+                             final AdjustedPredictionService thisAdjustedPrediction,
                              final JsonStore thisStore) {
     this.stocks = thisStocks;
     this.forecast = thisForecast;
     this.news = thisNews;
+    this.adjustedPrediction = thisAdjustedPrediction;
     this.store = thisStore;
   }
 
@@ -162,6 +169,73 @@ public final class CompositeController {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
               jsonError(e.getMessage())
       );
+    }
+  }
+
+  /**
+   * Generates sentiment-adjusted stock price predictions by adjusting
+   * price forecasts with news sentiment analysis.
+   *
+   * @param symbol optional stock symbol to predict;
+   *               defaults to a predefined value if omitted
+   * @param force  whether to bypass cached market data
+   *               and fetch fresh values
+   * @return a JSON response containing sentiment-adjusted predictions
+   *               or an error description
+   */
+  @GetMapping("/combined-prediction")
+  public ResponseEntity<?> getCombinedPrediction(
+          @RequestParam(required = false) final String symbol,
+          @RequestParam(defaultValue = "false") final boolean force) {
+    try {
+      final String s = DEFAULT_SYMBOL;
+      
+      // Get price predictions
+      Map<String, String> pricePredictions;
+      try {
+        pricePredictions = forecast.predictFuturePrices(s);
+        if (pricePredictions == null || pricePredictions.isEmpty()) {
+          return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                  .body(jsonError("Forecast service returned empty predictions"));
+        }
+      } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(jsonError("Forecast service error: " + e.getMessage()));
+      }
+      
+      // Get sentiment analysis
+      SentimentResult sentimentResult;
+      try {
+        sentimentResult = news.analyzeSentiment(s);
+        if (sentimentResult == null) {
+          return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                  .body(jsonError("Sentiment service returned null result"));
+        }
+      } catch (Exception e) {
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(jsonError("Sentiment service error: " + e.getMessage()));
+      }
+      
+      // Adjust predictions with sentiment
+      Map<String, String> adjustedPredictions = adjustedPrediction
+              .adjustPricesWithSentiment(pricePredictions, sentimentResult);
+      
+      return ResponseEntity.ok(Map.of(
+          "symbol", s,
+          "sentiment", Map.of(
+              "score", sentimentResult.getSentimentScore(),
+              "label", sentimentResult.getSentimentLabel()
+          ),
+          "originalPredictions", pricePredictions,
+          "adjustedPredictions", adjustedPredictions
+      ));
+      
+    } catch (IllegalArgumentException e) {
+      return ResponseEntity.badRequest()
+              .body(jsonError(e.getMessage()));
+    } catch (Exception e) {
+      return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+              .body(jsonError("Unexpected error: " + e.getMessage()));
     }
   }
 

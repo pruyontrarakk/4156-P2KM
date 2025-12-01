@@ -44,25 +44,40 @@ public class AlphaVantageService implements StockDataService {
             throw new IllegalArgumentException("apiKey is required");
         }
 
+        // Use 'compact' instead of 'full' - 'full' is a premium feature
+        // 'compact' returns the last 100 data points (free tier)
         final String url = "https://www.alphavantage.co/query"
-                + "?function=TIME_SERIES_DAILY&outputsize=full"
+                + "?function=TIME_SERIES_DAILY&outputsize=compact"
                 + "&symbol=" + enc(symbol)
                 + "&apikey=" + enc(apiKey);
 
         final JsonNode root = getJson(url);
+        
+        // Check for error messages first
         if (root.hasNonNull("Error Message")) {
             throw new IllegalStateException(root.get("Error Message").asText());
         }
         if (root.hasNonNull("Note")) {
             throw new IllegalStateException(root.get("Note").asText());
         }
+        // Check for Information field (often indicates premium feature requirement)
+        if (root.hasNonNull("Information")) {
+            throw new IllegalStateException(root.get("Information").asText());
+        }
 
         final JsonNode series = root.get("Time Series (Daily)");
         if (series == null
             || series.isMissingNode()
             || !series.fieldNames().hasNext()) {
-        throw new IllegalStateException(
-            "Missing 'Time Series (Daily)' in response");
+            // Provide more debugging info about what we actually received
+            StringBuilder errorMsg = new StringBuilder(
+                "Missing 'Time Series (Daily)' in response. ");
+            errorMsg.append("Response fields: ");
+            if (root.isObject()) {
+                root.fieldNames().forEachRemaining(field -> 
+                    errorMsg.append(field).append(", "));
+            }
+            throw new IllegalStateException(errorMsg.toString());
         }
 
         final List<StockBar> bars = parseDailyBars(series);

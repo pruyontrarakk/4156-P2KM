@@ -1,5 +1,6 @@
 package com.example.market.api;
 
+import com.example.market.service.analysis.AdjustedPredictionService;
 import com.example.market.service.forecast.ForecastDataService;
 import com.example.market.service.news.NewsDataService;
 import com.example.market.service.stock.JsonStore;
@@ -20,6 +21,7 @@ class CompositeControllerPrivateTest {
         mock(StockDataService.class),
         mock(ForecastDataService.class),
         mock(NewsDataService.class),
+        mock(AdjustedPredictionService.class),
         mock(JsonStore.class)
     );
 
