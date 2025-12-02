@@ -1,42 +1,30 @@
-package com.example.market.service.forecast.python;
+package com.example.market.service.forecast.trendmaster.python;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.stereotype.Service;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.HashMap;
 import java.util.Map;
-import org.springframework.stereotype.Service;
 
 /**
  * This class defines the Python Service. It defines useful methods
  * for running python scripts, particularly stock prediction scripts.
  */
-@Service("pythonService")
+@Service("trendmasterPythonService")
 public class PythonService {
   /** Maximum length for error message preview. */
   private static final int ERROR_PREVIEW_LENGTH = 50;
   /** Maximum length for JSON response preview. */
   private static final int JSON_PREVIEW_LENGTH = 200;
 
-  /** used to run python processes. */
-  private final ProcessRunner processRunner;
-
-  /**
-   * All-args constructor.
-   *
-   * @param thisProcessRunner {@link ProcessRunner} object.
-   * */
-  public PythonService(final ProcessRunner thisProcessRunner) {
-    this.processRunner = thisProcessRunner;
-  }
   /**
    * Constructs a new {@code PythonService}.
    */
-  public PythonService() {
-    this.processRunner = new DefaultProcessRunner();
-  }
+  public PythonService() { }
 
   /**
    * Predicts the next 10 stock prices of a company.
@@ -72,8 +60,7 @@ public class PythonService {
               + "trendmaster/main.py"
       );
       pb.redirectErrorStream(true);
-      //Process process = pb.start();
-      Process process = processRunner.start(pb);
+      Process process = pb.start();
 
       BufferedReader reader = new BufferedReader(
               new InputStreamReader(process.getInputStream()));
@@ -105,17 +92,27 @@ public class PythonService {
   }
 
   /**
-   * Predicts the next 10 stock prices of a company.
+   * Predicts future stock prices by invoking the TrendMaster model.
    *
-   * @param response An {@code String} representing the standard output from
-   *                 TrendMaster Python script.
-   * @return a {@code Map} generated from TrendMaster where each key is a date
-   *                 (as a {@code String}) and each value is the corresponding
-   *                 predicted closing price (also as a {@code String})
-   * @throws RuntimeException if the Python script fails to execute
-   *                 or produces no output
+   * @return a {@code Map} where each key is a date string
+   *         and each value is the predicted price for that date
    */
-  public Map<String, String> parseTrendMasterResponse(final String response) {
+  public Map<String, String> predictFuturePrices() {
+    String trendMasterResponse = runTrendMaster();
+//    Map<String, String> parsed = parseTrendMasterResponse(
+//    trendMasterResponse);
+    return parseTrendMasterResponse(trendMasterResponse);
+  }
+
+  /**
+   * Parses predictions made from TrendMaster model.
+   *
+   * @param response An {@code String} representing the standard output
+   *                 from python script.
+   * @return a {@code Map} where each key is a date string
+   *         and each value is the predicted price for that date
+   */
+  private Map<String, String> parseTrendMasterResponse(final String response) {
     if (response == null || response.trim().isEmpty()) {
       throw new RuntimeException("Empty response from Python script");
     }

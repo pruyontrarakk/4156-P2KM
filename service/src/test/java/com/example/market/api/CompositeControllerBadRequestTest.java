@@ -1,5 +1,6 @@
 package com.example.market.api;
 
+import com.example.market.service.analysis.AdjustedPredictionService;
 import com.example.market.service.forecast.ForecastDataService;
 import com.example.market.service.news.NewsDataService;
 import com.example.market.service.stock.JsonStore;
@@ -30,6 +31,7 @@ class CompositeControllerBadRequestTest {
   @MockBean StockDataService stocks;
   @MockBean ForecastDataService forecast;
   @MockBean NewsDataService news;
+  @MockBean AdjustedPredictionService adjustedPrediction;
   @MockBean JsonStore store;
 
   @TempDir Path tmp;
