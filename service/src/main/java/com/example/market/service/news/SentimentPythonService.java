@@ -1,6 +1,8 @@
 package com.example.market.service.news;
 
 import com.example.market.model.news.SentimentResult;
+import com.example.market.service.forecast.python.DefaultProcessRunner;
+import com.example.market.service.forecast.python.ProcessRunner;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +13,25 @@ import java.util.stream.Collectors;
 
 @Service
 public class SentimentPythonService implements SentimentAnalysisPort {
+
+    /** {@link ProcessRunner} object. */
+    private final ProcessRunner processRunner;
+
+    /**
+     * All-args constructor.
+     *
+     * @param thisProcessRunner given {@link ProcessRunner} object.
+     * */
+    public SentimentPythonService(final ProcessRunner thisProcessRunner) {
+        this.processRunner = thisProcessRunner;
+    }
+
+    /**
+     * No-args constructor.
+     * */
+    public SentimentPythonService() {
+        this.processRunner = new DefaultProcessRunner();
+    }
 
     /**
      * Calls upon Python model to get sentiment rating.
@@ -33,7 +54,8 @@ public class SentimentPythonService implements SentimentAnalysisPort {
         );
         pb.redirectErrorStream(true);
 
-        Process process = pb.start();
+        //Process process = pb.start();
+        Process process = processRunner.start(pb);
 
         String output;
         try (BufferedReader reader = new BufferedReader(

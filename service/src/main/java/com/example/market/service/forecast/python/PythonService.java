@@ -15,10 +15,23 @@ import org.springframework.stereotype.Service;
  */
 @Service("pythonService")
 public class PythonService {
+  /** used to run python processes. */
+  private final ProcessRunner processRunner;
+
+  /**
+   * All-args constructor.
+   *
+   * @param thisProcessRunner {@link ProcessRunner} object.
+   * */
+  public PythonService(final ProcessRunner thisProcessRunner) {
+    this.processRunner = thisProcessRunner;
+  }
   /**
    * Constructs a new {@code PythonService}.
    */
-  public PythonService() { }
+  public PythonService() {
+    this.processRunner = new DefaultProcessRunner();
+  }
 
   /**
    * Predicts the next 10 stock prices of a company.
@@ -53,7 +66,8 @@ public class PythonService {
               + "trendmaster/main.py"
       );
       pb.redirectErrorStream(true);
-      Process process = pb.start();
+      //Process process = pb.start();
+      Process process = processRunner.start(pb);
 
       BufferedReader reader = new BufferedReader(
               new InputStreamReader(process.getInputStream()));
@@ -85,7 +99,7 @@ public class PythonService {
    * @throws RuntimeException if the Python script fails to execute
    *                 or produces no output
    */
-  private Map<String, String> parseTrendMasterResponse(final String response) {
+  public Map<String, String> parseTrendMasterResponse(final String response) {
     Map<String, String> result = new HashMap<>();
     ObjectMapper mapper = new ObjectMapper();
     try {
