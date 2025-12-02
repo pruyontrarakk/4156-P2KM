@@ -52,17 +52,19 @@ public class AlphaVantageService implements StockDataService {
                 + "&apikey=" + enc(apiKey);
 
         final JsonNode root = getJson(url);
-        
+
         // Check for error messages first
         if (root.hasNonNull("Error Message")) {
-            throw new IllegalStateException(root.get("Error Message").asText());
+            throw new IllegalStateException(
+                root.get("Error Message").asText());
         }
         if (root.hasNonNull("Note")) {
             throw new IllegalStateException(root.get("Note").asText());
         }
-        // Check for Information field (often indicates premium feature requirement)
+        // Check for Information field (premium feature requirement)
         if (root.hasNonNull("Information")) {
-            throw new IllegalStateException(root.get("Information").asText());
+            throw new IllegalStateException(
+                root.get("Information").asText());
         }
 
         final JsonNode series = root.get("Time Series (Daily)");
@@ -74,7 +76,7 @@ public class AlphaVantageService implements StockDataService {
                 "Missing 'Time Series (Daily)' in response. ");
             errorMsg.append("Response fields: ");
             if (root.isObject()) {
-                root.fieldNames().forEachRemaining(field -> 
+                root.fieldNames().forEachRemaining(field ->
                     errorMsg.append(field).append(", "));
             }
             throw new IllegalStateException(errorMsg.toString());

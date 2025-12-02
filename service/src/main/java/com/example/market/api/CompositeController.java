@@ -54,7 +54,8 @@ public final class CompositeController {
   public CompositeController(final StockDataService thisStocks,
                              final ForecastDataService thisForecast,
                              final NewsDataService thisNews,
-                             final AdjustedPredictionService thisAdjustedPrediction,
+                             final AdjustedPredictionService
+                                 thisAdjustedPrediction,
                              final JsonStore thisStore) {
     this.stocks = thisStocks;
     this.forecast = thisForecast;
@@ -189,20 +190,22 @@ public final class CompositeController {
           @RequestParam(defaultValue = "false") final boolean force) {
     try {
       final String s = DEFAULT_SYMBOL;
-      
+
       // Get price predictions
       Map<String, String> pricePredictions;
       try {
         pricePredictions = forecast.predictFuturePrices(s);
         if (pricePredictions == null || pricePredictions.isEmpty()) {
           return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                  .body(jsonError("Forecast service returned empty predictions"));
+                  .body(jsonError("Forecast service returned empty "
+                      + "predictions"));
         }
       } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(jsonError("Forecast service error: " + e.getMessage()));
+                .body(jsonError("Forecast service error: "
+                    + e.getMessage()));
       }
-      
+
       // Get sentiment analysis
       SentimentResult sentimentResult;
       try {
@@ -213,13 +216,14 @@ public final class CompositeController {
         }
       } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(jsonError("Sentiment service error: " + e.getMessage()));
+                .body(jsonError("Sentiment service error: "
+                    + e.getMessage()));
       }
-      
+
       // Adjust predictions with sentiment
       Map<String, String> adjustedPredictions = adjustedPrediction
               .adjustPricesWithSentiment(pricePredictions, sentimentResult);
-      
+
       return ResponseEntity.ok(Map.of(
           "symbol", s,
           "sentiment", Map.of(
@@ -229,7 +233,7 @@ public final class CompositeController {
           "originalPredictions", pricePredictions,
           "adjustedPredictions", adjustedPredictions
       ));
-      
+
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest()
               .body(jsonError(e.getMessage()));

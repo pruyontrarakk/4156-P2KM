@@ -15,6 +15,11 @@ import org.springframework.stereotype.Service;
  */
 @Service("pythonService")
 public class PythonService {
+  /** Maximum length for error message preview. */
+  private static final int ERROR_PREVIEW_LENGTH = 50;
+  /** Maximum length for JSON response preview. */
+  private static final int JSON_PREVIEW_LENGTH = 200;
+
   /**
    * Constructs a new {@code PythonService}.
    */
@@ -64,21 +69,21 @@ public class PythonService {
         allOutput.append(line).append("\n");
         lastLine = line;
       }
-      
+
       int exitCode = process.waitFor();
-      
+
       if (exitCode != 0) {
-        throw new RuntimeException("Python script failed with exit code " 
+        throw new RuntimeException("Python script failed with exit code "
             + exitCode + ". Output: " + allOutput.toString());
       }
-      
+
       if (lastLine == null) {
         throw new RuntimeException("No output from Python script. "
             + "Full output: " + allOutput.toString());
       }
       result = lastLine;
     } catch (Exception e) {
-      throw new RuntimeException("Failed to run TrendMaster script: " 
+      throw new RuntimeException("Failed to run TrendMaster script: "
           + e.getMessage() + ". Output: " + allOutput.toString(), e);
     }
 
@@ -100,15 +105,17 @@ public class PythonService {
     if (response == null || response.trim().isEmpty()) {
       throw new RuntimeException("Empty response from Python script");
     }
-    
+
     // Check if response looks like JSON (should start with { or ")
     String trimmed = response.trim();
     if (!trimmed.startsWith("{") && !trimmed.startsWith("\"")) {
+      String preview = trimmed.length() > ERROR_PREVIEW_LENGTH
+          ? trimmed.substring(0, ERROR_PREVIEW_LENGTH) + "..."
+          : trimmed;
       throw new RuntimeException("Python script output is not valid JSON. "
-          + "Response starts with: " + (trimmed.length() > 50 
-          ? trimmed.substring(0, 50) + "..." : trimmed));
+          + "Response starts with: " + preview);
     }
-    
+
     Map<String, String> result = new HashMap<>();
     ObjectMapper mapper = new ObjectMapper();
     try {
@@ -123,7 +130,8 @@ public class PythonService {
       JsonNode predictionNode = rootNode.get("Predicted_Close");
 
       if (dateNode == null || predictionNode == null) {
-        throw new RuntimeException("Missing 'Date' or 'Predicted_Close' in JSON response");
+        throw new RuntimeException("Missing 'Date' or 'Predicted_Close' "
+            + "in JSON response");
       }
 
       for (int i = 0; i < dateNode.size(); i++) {
@@ -132,9 +140,11 @@ public class PythonService {
       }
 
     } catch (JsonProcessingException e) {
+      String preview = response.length() > JSON_PREVIEW_LENGTH
+          ? response.substring(0, JSON_PREVIEW_LENGTH) + "..."
+          : response;
       throw new RuntimeException("Failed to parse JSON from Python script. "
-          + "Response: " + (response.length() > 200 
-          ? response.substring(0, 200) + "..." : response), e);
+          + "Response: " + preview, e);
     }
 
     return result;
