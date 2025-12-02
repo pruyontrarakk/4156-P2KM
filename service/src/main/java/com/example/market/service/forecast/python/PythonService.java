@@ -1,11 +1,19 @@
 package com.example.market.service.forecast.python;
 
+import com.example.market.model.stock.StockDailySeries;
+import com.example.market.service.stock.AlphaVantageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.BufferedReader;
+import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Service;
 
@@ -23,19 +31,49 @@ public class PythonService {
   /** used to run python processes. */
   private final ProcessRunner processRunner;
 
+  private AlphaVantageService stockDataService;
+
   /**
    * All-args constructor.
    *
    * @param thisProcessRunner {@link ProcessRunner} object.
    * */
-  public PythonService(final ProcessRunner thisProcessRunner) {
+  public PythonService(final ProcessRunner thisProcessRunner, final AlphaVantageService thisStockDataService) {
     this.processRunner = thisProcessRunner;
+    this.stockDataService = thisStockDataService;
   }
+
   /**
    * Constructs a new {@code PythonService}.
    */
   public PythonService() {
     this.processRunner = new DefaultProcessRunner();
+    this.stockDataService = new AlphaVantageService();
+  }
+
+  public void getStockData(final String companyName) {
+    System.out.println("Getting stock data for " + companyName);
+    String key = System.getenv("ALPHAVANTAGE_API_KEY");
+    try {
+      StockDailySeries stockDailySeries = stockDataService.fetchDaily(companyName, key);
+      // convert to JSON string
+      ObjectMapper mapper = new ObjectMapper();
+//      String json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(stockDailySeries);
+//      System.out.println(json);
+
+      // write to file
+      mapper.writerWithDefaultPrettyPrinter()
+              .writeValue(new File("stock_daily.json"), stockDailySeries);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+  }
+
+  public static void main(String[] args) {
+    PythonService service = new PythonService();
+//    service.getStockData("AAPL"); // or any ticker
+      Map<String, String> result = service.predictFuturePrices("NVDA", 20);
+      System.out.println(result);
   }
 
   /**
@@ -47,6 +85,41 @@ public class PythonService {
    *                    (also as a {@code String})
    */
   public Map<String, String> predictFuturePrices(final String companyName) {
+    return predictFuturePrices(companyName, 10);
+  }
+  /**
+   * Predicts the next X stock prices of a company.
+   *
+   * @param companyName An {@code String} representing the selected company.
+   * @return a {@code Map} where each key is a date (as a {@code String}) and
+   *                    each value is the corresponding predicted closing price
+   *                    (also as a {@code String})
+   */
+  public Map<String, String> predictFuturePrices(final String companyName, final int horizon) {
+    // create stock_daily.json in directory
+    try {
+      getStockData(companyName);
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    // Update python script based on given horizon
+    try {
+      System.out.println(System.getProperty("user.dir"));
+      Path pythonScript = Paths.get(System.getProperty("user.dir") + "/service/src/main/java/com/example/market/service/forecast/trendmaster/main.py"
+      );
+      List<String> lines = Files.readAllLines(pythonScript);
+      for (int i = 0; i < lines.size(); i++) {
+        if (lines.get(i).contains("future_steps=")) {
+          lines.set(i, "future_steps=" + horizon);
+          break;
+        }
+      }
+      Files.write(pythonScript, lines);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
     String trendMasterResponse = runTrendMaster();
     return parseTrendMasterResponse(trendMasterResponse);
   }
@@ -64,13 +137,16 @@ public class PythonService {
     String result = "";
     StringBuilder allOutput = new StringBuilder();
     try {
-
+      System.out.println("Working directory: " + new File(".").getAbsolutePath());
       ProcessBuilder pb = new ProcessBuilder(
               "/bin/bash", "-c",
               "python3 -m pip install --quiet trendmaster && "
-              + "python3 src/main/java/com/example/market/service/forecast/"
+              + "python3 service/src/main/java/com/example/market/service/forecast/"
               + "trendmaster/main.py"
       );
+      Map<String, String> env = pb.environment();
+      String oldPath = env.get("PATH");
+      env.put("PATH", oldPath + ":/Library/Frameworks/Python.framework/Versions/3.10/bin");
       pb.redirectErrorStream(true);
       //Process process = pb.start();
       Process process = processRunner.start(pb);

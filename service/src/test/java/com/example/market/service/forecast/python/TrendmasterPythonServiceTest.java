@@ -1,12 +1,17 @@
 package com.example.market.service.forecast.python;
 
+import com.example.market.model.stock.StockDailySeries;
 import com.example.market.service.forecast.python.ProcessRunner;
+import com.example.market.service.stock.AlphaVantageService;
+import com.example.market.service.stock.StockDataService;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -71,7 +76,13 @@ class TrendmasterPythonServiceTest {
     ProcessRunner runner = mock(ProcessRunner.class);
     when(runner.start(any())).thenReturn(process);
 
-    PythonService service = new PythonService(runner);
+    AlphaVantageService mockStockData = mock(AlphaVantageService.class);
+    StockDailySeries fakeSeries = new StockDailySeries(
+            "AAPL", "2025-02-01", "AlphaVantage", List.of()
+    );
+    when(mockStockData.fetchDaily(eq("AAPL"), any())).thenReturn(fakeSeries);
+
+    PythonService service = new PythonService(runner, mockStockData);
 
     String result = service.runTrendMaster();
 

@@ -107,14 +107,14 @@ public final class CompositeController {
   @GetMapping("/predict")
   public ResponseEntity<?> predict(@RequestParam(required = false)
                                      final String symbol,
-                                   @RequestParam(defaultValue = "next-day")
-                                   final String horizon,
+                                   @RequestParam(defaultValue = "10")
+                                   final int horizon,
                                    @RequestParam(defaultValue = "false")
                                      final boolean force) {
     try {
       StockDailySeries series = getDailySeries(DEFAULT_SYMBOL, force);
       Map<String, String> map = forecast
-              .predictFuturePrices(DEFAULT_SYMBOL); // placeholder
+              .predictFuturePrices(DEFAULT_SYMBOL, horizon); // placeholder
       return ResponseEntity.ok(Map.of(
           "symbol", DEFAULT_SYMBOL,
           "horizon", horizon,
@@ -187,6 +187,7 @@ public final class CompositeController {
   @GetMapping("/combined-prediction")
   public ResponseEntity<?> getCombinedPrediction(
           @RequestParam(required = false) final String symbol,
+          @RequestParam(defaultValue = "10") final int horizon,
           @RequestParam(defaultValue = "false") final boolean force) {
     try {
       final String s = DEFAULT_SYMBOL;
@@ -194,7 +195,7 @@ public final class CompositeController {
       // Get price predictions
       Map<String, String> pricePredictions;
       try {
-        pricePredictions = forecast.predictFuturePrices(s);
+        pricePredictions = forecast.predictFuturePrices(s, horizon);
         if (pricePredictions == null || pricePredictions.isEmpty()) {
           return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                   .body(jsonError("Forecast service returned empty "
