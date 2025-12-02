@@ -16,6 +16,9 @@ public class ForecastDataService {
   @Qualifier("trendmasterPythonService")
   private final PythonService pythonService;
 
+  /** Default horizon setting. */
+  private static final int DEFAULT_HORIZON = 10;
+
   /**
    * Creates a new {@code ForecastDataService} that uses the specified
    * {@link PythonService} instance to perform forecast computations.
@@ -44,18 +47,20 @@ public class ForecastDataService {
    *                    (also as a {@code String})
    */
   public Map<String, String> predictFuturePrices(final String companyName) {
-    return pythonService.predictFuturePrices(companyName, 10);
+    return pythonService.predictFuturePrices(companyName, DEFAULT_HORIZON);
   }
 
   /**
    * Predicts what the stock price will be over the course of 10 days.
    *
    * @param companyName A {@code String} object containing the company name
+   * @param horizon X amount of days to predict into the future
    * @return a {@code Map} where each key is a date (as a {@code String}) and
    *                    each value is the corresponding predicted closing price
    *                    (also as a {@code String})
    */
-  public Map<String, String> predictFuturePrices(final String companyName, final int horizon) {
+  public Map<String, String> predictFuturePrices(final String companyName,
+                                                 final int horizon) {
     return pythonService.predictFuturePrices(companyName, horizon);
   }
 }

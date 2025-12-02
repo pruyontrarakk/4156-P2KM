@@ -31,7 +31,7 @@ class ForecastDataServiceUnitTests {
     );
 
     // NOTE: PythonService now requires a String parameter
-    when(py.predictFuturePrices(anyString())).thenReturn(fake);
+    when(py.predictFuturePrices(anyString(), anyInt())).thenReturn(fake);
 
     ForecastDataService svc = new ForecastDataService(py);
     Map<String, String> got = svc.predictFuturePrices("AMZN");
@@ -46,7 +46,7 @@ class ForecastDataServiceUnitTests {
 
     // Replace the internal pythonService with a mock using reflection
     PythonService mockPython = mock(PythonService.class);
-    when(mockPython.predictFuturePrices("MSFT"))
+    when(mockPython.predictFuturePrices("MSFT", 10))
             .thenReturn(Map.of("2025-02-01", "200.00"));
 
     Field field = ForecastDataService.class.getDeclaredField("pythonService");
@@ -58,7 +58,7 @@ class ForecastDataServiceUnitTests {
 
     // Assert
     assertEquals("200.00", result.get("2025-02-01"));
-    verify(mockPython).predictFuturePrices("MSFT");
+    verify(mockPython).predictFuturePrices("MSFT", 10);
   }
 
 }

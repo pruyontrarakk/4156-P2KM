@@ -179,6 +179,7 @@ public final class CompositeController {
    *
    * @param symbol optional stock symbol to predict;
    *               defaults to a predefined value if omitted
+   * @param horizon X amount of days to predict into future
    * @param force  whether to bypass cached market data
    *               and fetch fresh values
    * @return a JSON response containing sentiment-adjusted predictions
@@ -245,8 +246,15 @@ public final class CompositeController {
   }
 
   /* ---------------- helpers ---------------- */
-
-  private StockDailySeries getDailySeries(final String symbol,
+  /**
+   * Returns the daily stock series for the given symbol, using cache when valid
+   * and refreshing from the remote API when necessary.
+   *
+   * @param symbol the stock symbol; must be non-blank
+   * @param force  whether to bypass the cache and force a fresh fetch
+   * @return the resolved {@link StockDailySeries}
+   */
+  public StockDailySeries getDailySeries(final String symbol,
                                           final boolean force)
           throws Exception {
     if (symbol == null || symbol.isBlank()) {
