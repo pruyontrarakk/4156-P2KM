@@ -13,16 +13,21 @@ public class newsUnitTest {
         // Create a mock of the Python service
         SentimentPythonService mockPythonService = mock(SentimentPythonService.class);
 
+        // Create a mock of the NewsApiClient (unused in this test, but required for constructor)
+        NewsApiClient mockNewsApiClient = mock(NewsApiClient.class);
+
         // Define mock responses
         when(mockPythonService.analyzeSentiment("Amazon"))
                 .thenReturn(new SentimentResult("Amazon", 4, "positive"));
+
         when(mockPythonService.analyzeSentiment("Meta"))
                 .thenReturn(new SentimentResult("Meta", 3, "neutral"));
+
         when(mockPythonService.analyzeSentiment("Tesla"))
                 .thenReturn(new SentimentResult("Tesla", 2, "negative"));
 
-        // Inject the mock into the NewsDataService
-        NewsDataService newsService = new NewsDataService(mockPythonService);
+        // Inject mocks into the NewsDataService
+        NewsDataService newsService = new NewsDataService(mockPythonService, mockNewsApiClient);
 
         // Verify results for Amazon
         SentimentResult amazon = newsService.analyzeSentiment("Amazon");
@@ -46,5 +51,8 @@ public class newsUnitTest {
         verify(mockPythonService, times(1)).analyzeSentiment("Amazon");
         verify(mockPythonService, times(1)).analyzeSentiment("Meta");
         verify(mockPythonService, times(1)).analyzeSentiment("Tesla");
+
+        // Confirm NewsApiClient was never used
+        verifyNoInteractions(mockNewsApiClient);
     }
 }
