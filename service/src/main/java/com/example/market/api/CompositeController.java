@@ -160,11 +160,12 @@ public final class CompositeController {
         var result = news.analyzeSentiment(s);
 
         Map<String, Object> payload = Map.of(
-                "symbol", s,
-                "sentimentScore", result.getSentimentScore(),
-                "sentimentLabel", result.getSentimentLabel(),
-                "source", "HuggingFaceModel"
-        );
+          "company", s,  // include company name (symbol)
+          "symbol", s,
+          "sentimentScore", result.getSentimentScore(),
+          "sentimentLabel", result.getSentimentLabel(),
+          "source", "HuggingFaceModel"
+          );
 
         store.write(cache, payload);
         return ResponseEntity.ok(payload);
