@@ -107,14 +107,14 @@ public final class CompositeController {
   @GetMapping("/predict")
   public ResponseEntity<?> predict(@RequestParam(required = false)
                                      final String symbol,
-                                   @RequestParam(defaultValue = "next-day")
-                                   final String horizon,
+                                   @RequestParam(defaultValue = "10")
+                                   final int horizon,
                                    @RequestParam(defaultValue = "false")
                                      final boolean force) {
     try {
       StockDailySeries series = getDailySeries(DEFAULT_SYMBOL, force);
       Map<String, String> map = forecast
-              .predictFuturePrices(DEFAULT_SYMBOL); // placeholder
+              .predictFuturePrices(DEFAULT_SYMBOL, horizon); // placeholder
       return ResponseEntity.ok(Map.of(
           "symbol", DEFAULT_SYMBOL,
           "horizon", horizon,
@@ -179,6 +179,7 @@ public final class CompositeController {
    *
    * @param symbol optional stock symbol to predict;
    *               defaults to a predefined value if omitted
+   * @param horizon X amount of days to predict into future
    * @param force  whether to bypass cached market data
    *               and fetch fresh values
    * @return a JSON response containing sentiment-adjusted predictions
@@ -187,6 +188,7 @@ public final class CompositeController {
   @GetMapping("/combined-prediction")
   public ResponseEntity<?> getCombinedPrediction(
           @RequestParam(required = false) final String symbol,
+          @RequestParam(defaultValue = "10") final int horizon,
           @RequestParam(defaultValue = "false") final boolean force) {
     try {
       final String s = DEFAULT_SYMBOL;
@@ -194,7 +196,7 @@ public final class CompositeController {
       // Get price predictions
       Map<String, String> pricePredictions;
       try {
-        pricePredictions = forecast.predictFuturePrices(s);
+        pricePredictions = forecast.predictFuturePrices(s, horizon);
         if (pricePredictions == null || pricePredictions.isEmpty()) {
           return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
                   .body(jsonError("Forecast service returned empty "
@@ -244,8 +246,15 @@ public final class CompositeController {
   }
 
   /* ---------------- helpers ---------------- */
-
-  private StockDailySeries getDailySeries(final String symbol,
+  /**
+   * Returns the daily stock series for the given symbol, using cache when valid
+   * and refreshing from the remote API when necessary.
+   *
+   * @param symbol the stock symbol; must be non-blank
+   * @param force  whether to bypass the cache and force a fresh fetch
+   * @return the resolved {@link StockDailySeries}
+   */
+  public StockDailySeries getDailySeries(final String symbol,
                                           final boolean force)
           throws Exception {
     if (symbol == null || symbol.isBlank()) {
