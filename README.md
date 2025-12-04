@@ -149,8 +149,66 @@ Results: [dont have yet]
 - [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
 - [Jira](https://p2km.atlassian.net/jira/software/projects/BTS/boards/1): Used for managing timeline and project tasks
 
+## Client Program
+
+We include a simple Python CLI client in `client/client.py` that calls our service’s API and shows sentiment-adjusted price predictions.
+
+### Prerequisites
+
+- Python 3.10+ installed
+- Service running locally or deployed (see “Deployment” section)
+- Environment variables:
+  - `SERVICE_BASE_URL` – base URL of the service, e.g.
+    - `http://localhost:8080` (local)
+    - `https://<your-cloud-run-url>` (cloud)
+  - `CLIENT_ID` – optional string to identify this client instance in the service logs (e.g. `alice-laptop`)
+
+Install dependencies:
+
+```bash
+cd client
+python3 -m venv venv
+source venv/bin/activate
+pip install requests
+```
+###
+Run the client
+```bash
+export SERVICE_BASE_URL=http://localhost:8080
+export CLIENT_ID=client-kai-1
+
+cd client
+python client.py
+```
+
+The client will prompt you for:
+stock symbol (e.g. AAPL)
+prediction horizon in days
+It then calls the /market/combined-prediction endpoint and prints a table of:
+original predicted close price per day
+sentiment-adjusted predicted price per day
+overall sentiment label and score
+
+### Multiple clients / how the service tells them apart
+You can run multiple client instances at once by using different CLIENT_ID values:
+```bash
+# Terminal 1
+export SERVICE_BASE_URL=https://<cloud-url>
+export CLIENT_ID=desk-kai
+python client.py
+
+# Terminal 2
+export SERVICE_BASE_URL=https://<cloud-url>
+export CLIENT_ID=laptop-kiki
+python client.py
+```
+Each client sends its id in the X-Client-Id HTTP header.
+Our Spring service logs that header value for every incoming request, so we can distinguish which client made which call even if they are running simultaneously.
+
+
 ## AI Disclosure
 We used the free version of ChatGPT to assist with debugging, drafting unit test, and wording.
+
 
 
 
