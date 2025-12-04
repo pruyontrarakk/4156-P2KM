@@ -76,20 +76,21 @@ public final class CompositeController {
    *                or an error description
    */
   @GetMapping("/daily")
-  public ResponseEntity<?> getDaily(@RequestParam(required = false)
-                                      final String symbol,
-                                    @RequestParam(defaultValue = "false")
-                                    final boolean force) {
+  public ResponseEntity<?> getDaily(
+      @RequestParam(required = false) final String symbol,
+      @RequestParam(defaultValue = "false") final boolean force) {
     try {
-      StockDailySeries series = getDailySeries(DEFAULT_SYMBOL, force);
+      final String s = resolveSymbol(symbol);
+      StockDailySeries series = getDailySeries(s, force);
       return ResponseEntity.ok(series);
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-              .body(jsonError(e.getMessage()));
+          .body(jsonError(e.getMessage()));
     }
   }
+
 
   /**
    * Generates a stock price prediction for the given symbol
@@ -105,30 +106,33 @@ public final class CompositeController {
    *                or an error description
    */
   @GetMapping("/predict")
-  public ResponseEntity<?> predict(@RequestParam(required = false)
-                                     final String symbol,
-                                   @RequestParam(defaultValue = "10")
-                                   final int horizon,
-                                   @RequestParam(defaultValue = "false")
-                                     final boolean force) {
+  public ResponseEntity<?> predict(
+      @RequestParam(required = false) final String symbol,
+      @RequestParam(defaultValue = "10") final int horizon,
+      @RequestParam(defaultValue = "false") final boolean force) {
     try {
-      StockDailySeries series = getDailySeries(DEFAULT_SYMBOL, force);
-      Map<String, String> map = forecast
-              .predictFuturePrices(DEFAULT_SYMBOL, horizon); // placeholder
+      final String s = resolveSymbol(symbol);
+
+      // Keep this to warm the cache and surface AlphaVantage errors
+      StockDailySeries series = getDailySeries(s, force);
+
+      Map<String, String> map = forecast.predictFuturePrices(s, horizon);
+
       return ResponseEntity.ok(Map.of(
-          "symbol", DEFAULT_SYMBOL,
+          "symbol", s,
           "horizon", horizon,
           "prediction", map,
           "source", series.getSource()
       ));
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest()
-              .body(jsonError(e.getMessage()));
+          .body(jsonError(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-              .body(jsonError(e.getMessage()));
+          .body(jsonError(e.getMessage()));
     }
   }
+
 
   /**
    * Retrieves sentiment analysis results for the default symbol.
@@ -190,45 +194,43 @@ public final class CompositeController {
    */
   @GetMapping("/combined-prediction")
   public ResponseEntity<?> getCombinedPrediction(
-          @RequestParam(required = false) final String symbol,
-          @RequestParam(defaultValue = "10") final int horizon,
-          @RequestParam(defaultValue = "false") final boolean force) {
+      @RequestParam(required = false) final String symbol,
+      @RequestParam(defaultValue = "10") final int horizon,
+      @RequestParam(defaultValue = "false") final boolean force) {
     try {
-      final String s = DEFAULT_SYMBOL;
+      final String s = resolveSymbol(symbol);
 
-      // Get price predictions
+      // 1) Get price predictions for this symbol
       Map<String, String> pricePredictions;
       try {
         pricePredictions = forecast.predictFuturePrices(s, horizon);
         if (pricePredictions == null || pricePredictions.isEmpty()) {
           return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                  .body(jsonError("Forecast service returned empty "
-                      + "predictions"));
+              .body(jsonError("Forecast service returned empty predictions"));
         }
       } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(jsonError("Forecast service error: "
-                    + e.getMessage()));
+            .body(jsonError("Forecast service error: " + e.getMessage()));
       }
 
-      // Get sentiment analysis
+      // 2) Get sentiment for this symbol
       SentimentResult sentimentResult;
       try {
         sentimentResult = news.analyzeSentiment(s);
         if (sentimentResult == null) {
           return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                  .body(jsonError("Sentiment service returned null result"));
+              .body(jsonError("Sentiment service returned null result"));
         }
       } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(jsonError("Sentiment service error: "
-                    + e.getMessage()));
+            .body(jsonError("Sentiment service error: " + e.getMessage()));
       }
 
-      // Adjust predictions with sentiment
+      // 3) Adjust predictions with sentiment
       Map<String, String> adjustedPredictions = adjustedPrediction
-              .adjustPricesWithSentiment(pricePredictions, sentimentResult);
+          .adjustPricesWithSentiment(pricePredictions, sentimentResult);
 
+      // 4) Build response payload
       return ResponseEntity.ok(Map.of(
           "symbol", s,
           "sentiment", Map.of(
@@ -241,14 +243,25 @@ public final class CompositeController {
 
     } catch (IllegalArgumentException e) {
       return ResponseEntity.badRequest()
-              .body(jsonError(e.getMessage()));
+          .body(jsonError(e.getMessage()));
     } catch (Exception e) {
       return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-              .body(jsonError("Unexpected error: " + e.getMessage()));
+          .body(jsonError("Unexpected error: " + e.getMessage()));
     }
   }
 
+
   /* ---------------- helpers ---------------- */
+  /**
+   * Resolve the effective stock symbol to use.
+   * Uses the provided symbol if non-blank, otherwise falls back to DEFAULT_SYMBOL.
+   */
+  private String resolveSymbol(final String symbol) {
+    return (symbol != null && !symbol.isBlank())
+        ? symbol.toUpperCase()
+        : DEFAULT_SYMBOL;
+  }
+
   /**
    * Returns the daily stock series for the given symbol, using cache when valid
    * and refreshing from the remote API when necessary.
@@ -302,7 +315,13 @@ public final class CompositeController {
   }
 
   private static String jsonError(final String msg) {
-    String safe = (msg == null ? "Unknown error" : msg).replace("\"", "'");
+    String safe = (msg == null ? "Unknown error" : msg)
+        .replace("\\", "\\\\")  // escape backslashes first
+        .replace("\"", "\\\"")  // escape quotes
+        .replace("\n", "\\n")   // escape newlines
+        .replace("\r", "\\r")   // escape carriage returns
+        .replace("\t", "\\t");  // escape tabs
     return "{\"error\":\"" + safe + "\"}";
-}
+  }
+
 }

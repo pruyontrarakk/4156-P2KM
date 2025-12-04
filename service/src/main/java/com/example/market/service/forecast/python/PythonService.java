@@ -86,9 +86,8 @@ public class PythonService {
   public void updatePythonScript(final int horizon) {
     // Update python script based on given horizon
     try {
-      Path pythonScript = Paths.get(System.getProperty("user.dir")
-              + "/service/src/main/java/com/example"
-              + "/market/service/forecast/trendmaster/main.py"
+      Path pythonScript = Paths.get(
+          "src/main/java/com/example/market/service/forecast/trendmaster/main.py"
       );
       List<String> lines = Files.readAllLines(pythonScript);
       for (int i = 0; i < lines.size(); i++) {
@@ -102,6 +101,7 @@ public class PythonService {
       e.printStackTrace();
     }
   }
+
 
   /**
    * Predicts the next 10 stock prices of a company.
@@ -155,11 +155,11 @@ public class PythonService {
       System.out.println("Working directory: "
               + new File(".").getAbsolutePath());
       ProcessBuilder pb = new ProcessBuilder(
-              "/bin/bash", "-c",
-              "python3 -m pip install --quiet trendmaster && "
-              + "python3 service/src/main/java"
-              + "/com/example/market/service/forecast/"
-              + "trendmaster/main.py"
+          "/bin/bash", "-c",
+          "python3 -m pip install --quiet trendmaster && "
+          + "python3 src/main/java"
+          + "/com/example/market/service/forecast/"
+          + "trendmaster/main.py"
       );
       Map<String, String> env = pb.environment();
       String oldPath = env.get("PATH");
