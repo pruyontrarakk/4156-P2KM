@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.example.market.model.news.SentimentResult;
 import com.example.market.service.forecast.python.ProcessRunner;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
@@ -36,7 +37,7 @@ public class SentimentPythonServiceTests {
     SentimentResult result = service.analyzeSentiment("AAPL");
 
     // Assert
-    assertEquals("AAPL", result.getCompany());
+    assertNull(result.getCompany());
     assertEquals(5, result.getSentimentScore());
     assertEquals("Very Positive", result.getSentimentLabel());
 

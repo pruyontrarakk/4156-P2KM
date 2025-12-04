@@ -140,38 +140,41 @@ public final class CompositeController {
    *              or an error response on failure
    **/
   @GetMapping("/sentiment")
-  public ResponseEntity<?> getSentiment(@RequestParam(required = false)
-                                          final String symbol,
-                                        @RequestParam(defaultValue = "false")
-                                        final boolean force) {
+  public ResponseEntity<?> getSentiment(
+        @RequestParam(required = false) final String symbol,
+        @RequestParam(defaultValue = "false") final boolean force) {
+
     try {
-      final String s = DEFAULT_SYMBOL;
-      final Path cache = store.newsPath(s);
+        // Use provided symbol or default
+        final String s = (symbol != null && !symbol.isBlank())
+                ? symbol.toUpperCase()
+                : DEFAULT_SYMBOL;
 
-      if (!force && isFresh(cache, NEWS_CACHE_TTL)) {
-        return ResponseEntity.ok(store.read(cache, Map.class));
-      }
+        final Path cache = store.newsPath(s);
 
-      var result = news.analyzeSentiment(s); // placeholder returns a POJO
+        if (!force && isFresh(cache, NEWS_CACHE_TTL)) {
+            return ResponseEntity.ok(store.read(cache, Map.class));
+        }
 
-      // persist as generic Map for simplicity in the cache
-      Map<String, Object> payload = Map.of(
-          "company", result.getCompany(),
+        // Sentiment now depends on the symbol
+        var result = news.analyzeSentiment(s);
+
+        Map<String, Object> payload = Map.of(
+          "company", s,  // include company name (symbol)
+          "symbol", s,
           "sentimentScore", result.getSentimentScore(),
           "sentimentLabel", result.getSentimentLabel(),
           "source", "HuggingFaceModel"
-      );
-      store.write(cache, payload);
-      return ResponseEntity.ok(payload);
+          );
 
-    } catch (IllegalArgumentException e) {
-      return ResponseEntity.badRequest().body(jsonError(e.getMessage()));
+        store.write(cache, payload);
+        return ResponseEntity.ok(payload);
+
     } catch (Exception e) {
-      return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(
-              jsonError(e.getMessage())
-      );
+        return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
+                .body(jsonError(e.getMessage() != null ? e.getMessage() : e.toString()));
     }
-  }
+}
 
   /**
    * Generates sentiment-adjusted stock price predictions by adjusting
@@ -299,6 +302,7 @@ public final class CompositeController {
   }
 
   private static String jsonError(final String msg) {
-    return "{\"error\":\"" + msg.replace("\"", "'") + "\"}";
-  }
+    String safe = (msg == null ? "Unknown error" : msg).replace("\"", "'");
+    return "{\"error\":\"" + safe + "\"}";
+}
 }
