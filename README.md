@@ -142,14 +142,15 @@ mvn clean test
 ```GET /market/combined-prediction``` — Generates sentiment-adjusted stock price predictions by combining price forecasts with sentiment analysis. Returns both original predictions and sentiment-adjusted predictions.
 
 
-## Style Checking Report [TODO]
+## Style Checking Report
 The tool "checkstyle" is used to check the style of our code and generate style checking reports. 
 The following code can be run in terminal to check the checkstyle report.
 
 1. `mvn checkstyle:check`
 2. `mvn checkstyle:checkstyle`
 
-Results: [dont have yet]
+Results:
+![alt-test](images/style_report)
 
 ## Branch Coverage Report
 JaCoCo was used to perform branch analysis in order to see the branch coverage.
@@ -159,11 +160,11 @@ The following code can be run in terminal to check the checkstyle report.
 3. `open ./target/site/jacoco/index.html`
 
 Results: 
-![alt text](image.png)
-![alt text](<Screenshot 2025-12-04 at 11.06.32 PM.png>)
+![alt text](images/image.png)
+![alt text](images/coverage_report.png)
 
 
-## Static Code Analysis [TODO]
+## Static Code Analysis
 PMD was used to perform static analysis on the codebase.
 The following code can be run in terminal to check the PMD report.
 
@@ -171,12 +172,8 @@ The following code can be run in terminal to check the PMD report.
 2. `mvn clean pmd:pmd`
 3. `open target/site/pmd.html`
 
-Results: [dont have yet]
-
-## Summary of Tools Used
-- [Alpha Vantage](https://www.alphavantage.co/): Used for retrieving relevant stock data.
-- [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
-- [Jira](https://p2km.atlassian.net/jira/software/projects/BTS/boards/1): Used for managing timeline and project tasks
+Results:
+![alt-test](images/static_analysis.png)
 
 ## Client Program
 
@@ -209,16 +206,12 @@ export CLIENT_ID=client-kai-1
 cd client
 python client.py
 ```
-
 The client will prompt you for:
 stock symbol (e.g. AAPL)
 prediction horizon in days
-It then calls the /market/combined-prediction endpoint and prints a table of:
-original predicted close price per day
-sentiment-adjusted predicted price per day
-overall sentiment label and score
+It then calls the /market/combined-prediction endpoint and prints a table as shown below:
 
-![alt text](IMG_8711.png)
+![alt text](images/IMG_8711.png)
 
 ### Multiple clients / how the service tells them apart
 You can run multiple client instances at once by using different CLIENT_ID values:
@@ -236,6 +229,10 @@ python client.py
 Each client sends its id in the X-Client-Id HTTP header.
 Our Spring service logs that header value for every incoming request, so we can distinguish which client made which call even if they are running simultaneously.
 
+## Summary of Tools Used
+- [Alpha Vantage](https://www.alphavantage.co/): Used for retrieving relevant stock data.
+- [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster): Used to generate stock price forecasts.
+- [Jira](https://p2km.atlassian.net/jira/software/projects/BTS/boards/1): Used for managing timeline and project tasks
 
 ## AI Disclosure
 We used the free version of ChatGPT to assist with debugging, drafting unit test, and wording.
