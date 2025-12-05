@@ -87,7 +87,8 @@ public class PythonService {
     // Update python script based on given horizon
     try {
       Path pythonScript = Paths.get(
-          "src/main/java/com/example/market/service/forecast/trendmaster/main.py"
+          "src/main/java/com/example/"
+                  + "market/service/forecast/trendmaster/main.py"
       );
       List<String> lines = Files.readAllLines(pythonScript);
       for (int i = 0; i < lines.size(); i++) {

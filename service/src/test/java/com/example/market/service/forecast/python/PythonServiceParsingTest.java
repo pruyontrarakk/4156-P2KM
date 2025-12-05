@@ -1,12 +1,15 @@
 package com.example.market.service.forecast.python;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Unit tests for PythonService.parseTrendMasterResponse that exercise
+ * both valid and invalid JSON responses.
+ */
 class PythonServiceParsingTest {
 
   static class StubPythonService extends PythonService {
@@ -15,38 +18,10 @@ class PythonServiceParsingTest {
     @Override public String runTrendMaster() { return payload; }
   }
 
-  private static final String OBJECT_JSON =
-      "{ \"Date\": {\"0\":\"2025-10-23\",\"1\":\"2025-10-24\"}, " +
-      "  \"Predicted_Close\": {\"0\":\"100.0\",\"1\":\"101.0\"} }";
-
-  // A JSON string literal that contains the JSON above (outer.isTextual() == true)
-  private static final String QUOTED_JSON = "\"" +
-      OBJECT_JSON.replace("\\", "\\\\").replace("\"", "\\\"") + "\"";
-
-  public static PythonService pythonService;
-  @BeforeAll
-  public static void setup() {
-    pythonService = new PythonService();
-  }
-
   @Test
-  void parses_whenOuterIsObjectNode() {
-    PythonService svc = new StubPythonService(OBJECT_JSON);
-    Map<String,String> m = svc.predictFuturePrices("AMZN");
-    assertEquals("100.0", m.get("2025-10-23"));
-    assertEquals("101.0", m.get("2025-10-24"));
-  }
+  void parsesValidJsonIntoDateToPriceMap() {
+    StubPythonService pythonService = new StubPythonService("");
 
-  @Test
-  void parses_whenOuterIsTextualJson() {
-    PythonService svc = new StubPythonService(QUOTED_JSON);
-    Map<String,String> m = svc.predictFuturePrices("AMZN");
-    assertEquals("100.0", m.get("2025-10-23"));
-    assertEquals("101.0", m.get("2025-10-24"));
-  }
-
-  @Test
-  void testParseTrendMasterResponse_normalJson() {
     String json = """
         {
           "Date": { "0": "2025-01-01", "1": "2025-01-02" },
@@ -60,4 +35,59 @@ class PythonServiceParsingTest {
     assertEquals("150.23", result.get("2025-01-01"));
     assertEquals("151.78", result.get("2025-01-02"));
   }
+
+  @Test
+  void blankResponseThrowsHelpfulException() {
+    StubPythonService pythonService = new StubPythonService("");
+    RuntimeException ex = assertThrows(RuntimeException.class,
+        () -> pythonService.parseTrendMasterResponse("   "));
+    assertTrue(ex.getMessage().contains("Empty response"),
+        "Expected message to mention empty response");
+  }
+
+  @Test
+  void nonJsonResponseThrowsHelpfulException() {
+    StubPythonService pythonService = new StubPythonService("");
+    RuntimeException ex = assertThrows(RuntimeException.class,
+        () -> pythonService.parseTrendMasterResponse("not-json"));
+    assertTrue(ex.getMessage().contains("not valid JSON"),
+        "Expected message to mention invalid JSON");
+  }
+
+  @Test
+  void missingDateOrPredictedCloseThrowsHelpfulException() {
+    StubPythonService pythonService = new StubPythonService("");
+
+    String jsonMissingFields = """
+        {
+          "somethingElse": { "0": "2025-01-01" }
+        }
+        """;
+
+    RuntimeException ex = assertThrows(RuntimeException.class,
+        () -> pythonService.parseTrendMasterResponse(jsonMissingFields));
+    assertTrue(ex.getMessage().contains("Missing 'Date' or 'Predicted_Close'"),
+        "Expected message to mention missing Date or Predicted_Close");
+  }
+
+  @Test
+  void textualJsonWrapperIsParsedCorrectly() {
+    StubPythonService pythonService = new StubPythonService("");
+
+    String inner = """
+        {
+          "Date": { "0": "2025-01-01" },
+          "Predicted_Close": { "0": "123.45" }
+        }
+        """.replace("\n", "").replace("  ", "");
+
+    // Outer JSON where the entire payload is a JSON-encoded string
+    String wrapped = "\"" + inner.replace("\"", "\\\"") + "\"";
+
+    Map<String, String> result = pythonService.parseTrendMasterResponse(wrapped);
+
+    assertEquals(1, result.size());
+    assertEquals("123.45", result.get("2025-01-01"));
+  }
+  
 }

@@ -176,7 +176,8 @@ public final class CompositeController {
 
     } catch (Exception e) {
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY)
-                .body(jsonError(e.getMessage() != null ? e.getMessage() : e.toString()));
+                .body(jsonError(e.getMessage() != null
+                        ? e.getMessage() : e.toString()));
     }
 }
 
@@ -254,7 +255,11 @@ public final class CompositeController {
   /* ---------------- helpers ---------------- */
   /**
    * Resolve the effective stock symbol to use.
-   * Uses the provided symbol if non-blank, otherwise falls back to DEFAULT_SYMBOL.
+   * Uses the provided symbol if non-blank,
+   * otherwise falls back to DEFAULT_SYMBOL.
+   *
+   * @param symbol provided symbol by client
+   * @return the revised company's stock symbol
    */
   private String resolveSymbol(final String symbol) {
     return (symbol != null && !symbol.isBlank())
