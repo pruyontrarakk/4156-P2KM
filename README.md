@@ -175,6 +175,29 @@ The following code can be run in terminal to check the PMD report.
 Results:
 ![alt-test](images/static_analysis.png)
 
+### Deployed Cloud Run Service
+
+In addition to running locally, the service is deployed on **Google Cloud Run** at:
+
+`https://market-service-263313208284.us-central1.run.app`
+
+You can call the same endpoints as the local service, for example:
+
+```bash
+# Daily OHLCV data (AMZN)
+curl -i "https://market-service-263313208284.us-central1.run.app/market/daily?symbol=AMZN"
+
+# News sentiment for a symbol
+curl -i "https://market-service-263313208284.us-central1.run.app/market/sentiment?symbol=AMZN"
+
+# Sentiment-adjusted price forecasts
+curl -i "https://market-service-263313208284.us-central1.run.app/market/combined-prediction?symbol=AMZN"
+```
+You can also point the Python client (see Client Program section below) at this URL via the SERVICE_BASE_URL environment variable:
+```bash
+export SERVICE_BASE_URL="https://market-service-263313208284.us-central1.run.app"
+```
+
 ## Client Program
 
 We include a simple Python CLI client in `client/client.py` that calls our service’s API and shows sentiment-adjusted price predictions.
@@ -197,6 +220,7 @@ python3 -m venv venv
 source venv/bin/activate
 pip install requests
 ```
+
 ###
 Run the client
 ```bash
