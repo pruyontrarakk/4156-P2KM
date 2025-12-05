@@ -12,7 +12,7 @@ In order to build and use our service you must install the following (for Mac):
 - TrendMaster - download following the instructions per this link: https://github.com/hemangjoshi37a/TrendMaster/blob/main/docs/installation.md
 
 ## Microservice Architecture
-The API architecture is built around three core microservices - **StockDataService**, **NewsDataService**, and **ForecastDataService**. These services are unified through the **CompositeController**, which acts as the central RESTful interface that aggregates their outputs and delivers user-friendly responses to clients.
+The API architecture is built around four core microservices - **StockDataService**, **NewsDataService**, **ForecastDataService**, and **AdjustedPredictionService**. These services are unified through the **CompositeController**, which acts as the central RESTful interface that aggregates their outputs and delivers user-friendly responses to clients.
 
 ### 1. StockDataService (and Alpha Vantage)
 Service exposing daily stock for a given ticker via Alpha Vantage.
@@ -44,15 +44,16 @@ The NewsDataService handles sentiment analysis for a given company using a local
 The service runs a Python script (sentiment_model.py) that uses the model nlptown/bert-base-multilingual-uncased-sentiment. 
 This model analyzes generated text about the company and returns a sentiment score between 1 (very negative) and 5 (very positive), along with a descriptive label.
 
-When /market/sentiment is called, the controller sends the request to NewsDataService, which then calls SentimentPythonService.
+When ```/market/sentiment``` is called, the controller sends the request to NewsDataService, which then calls SentimentPythonService.
 That service runs the Python script, which loads the Hugging Face model and produces a short JSON result.
 The JSON is parsed in Java and returned through the API.
 
-API endpoint:
-GET /market/sentiment
-Query parameters:
-symbol – optional; the company name or stock ticker to analyze (default is AMZN)
-force – optional; set to true to bypass cached results and run a fresh analysis
+API endpoint:    
+```GET /market/sentiment```
+
+Query parameters:   
+```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)   
+```force``` – optional; set to true to bypass cached results and run a fresh analysis
 
 Example requests:
 http://localhost:8080/market/sentiment
@@ -95,8 +96,30 @@ After that, Spring Boot can call it automatically for future requests.
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
 
-It includes a helper class called PythonService, which executes a Python script running TrendMaster’s forecasting model. 
-The service then parses the script’s JSON-formatted output and constructs a Map of dates and predicted prices for the ForecastDataService to use.
+It includes a helper class called PythonService, which executes a Python script running TrendMaster's forecasting model. 
+The service then parses the script's JSON-formatted output and constructs a Map of dates and predicted prices for the ForecastDataService to use.
+
+### 4. AdjustedPredictionService
+Service that adjusts stock price predictions based on news sentiment analysis to produce sentiment-adjusted price forecasts.
+
+Has a function ```adjustPricesWithSentiment(Map<String, String> stockPricePredictions, SentimentResult newsSentimentPrediction)``` that returns ```Map<String, String>```
+
+* Takes price predictions from ForecastDataService and sentiment results from NewsDataService
+* Uses a sophisticated non-linear formula with time decay to model how sentiment impacts future prices differently over time
+* Applies sentiment adjustments that diminish over time (time decay factor of 0.12)
+* Returns a map with the same date keys but sentiment-adjusted prices
+
+To operate this particular API service, 
+- Run in terminal 1:
+```
+cd service
+export ALPHAVANTAGE_API_KEY='<your_api_key>'
+mvn spring-boot:run
+```
+- Run in terminal 2:
+```
+curl -i "http://localhost:8080/market/combined-prediction" 
+```
 
 ## Running Tests
 To run our unit tests (located under the directory `src/test`), run the following command in the most outer `service` directory
@@ -111,6 +134,8 @@ mvn clean test
 ```GET /market/predict``` — Runs the placeholder forecast over the latest daily series (AMZN), returning a simple prediction map
 
 ```GET /market/sentiment``` — Returns a placeholder news-sentiment payload (AMZN), with optional force to bypass cache.
+
+```GET /market/combined-prediction``` — Generates sentiment-adjusted stock price predictions by combining price forecasts with sentiment analysis. Returns both original predictions and sentiment-adjusted predictions.
 
 
 ## Style Checking Report [TODO]
