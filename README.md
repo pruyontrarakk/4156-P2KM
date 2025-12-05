@@ -207,9 +207,10 @@ cd client
 python client.py
 ```
 The client will prompt you for:
-stock symbol (e.g. AAPL)
-prediction horizon in days
-It then calls the /market/combined-prediction endpoint and prints a table as shown below:
+- stock symbol (e.g. AAPL)
+- prediction horizon in days
+
+It then calls the /market/combined-prediction endpoint and prints a table like the one below:
 
 ![alt text](images/IMG_8711.png)
 
