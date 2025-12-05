@@ -155,8 +155,8 @@ The following code can be run in terminal to check the checkstyle report.
 3. `open ./target/site/jacoco/index.html`
 
 Results: 
-<img width="1401" height="366" alt="image" src="https://github.com/user-attachments/assets/131cbb07-2b81-48c7-85f9-8a1747bd8ab2" />
-<img width="1417" height="327" alt="image" src="https://github.com/user-attachments/assets/4dcec872-486a-4fe6-ba6e-0e20cf18c47e" />
+![alt text](image.png)
+![alt text](<Screenshot 2025-12-04 at 11.06.32 PM.png>)
 
 
 ## Static Code Analysis [TODO]
@@ -213,6 +213,8 @@ It then calls the /market/combined-prediction endpoint and prints a table of:
 original predicted close price per day
 sentiment-adjusted predicted price per day
 overall sentiment label and score
+
+![alt text](IMG_8711.png)
 
 ### Multiple clients / how the service tells them apart
 You can run multiple client instances at once by using different CLIENT_ID values:
