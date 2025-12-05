@@ -278,5 +278,28 @@ class NewsDataServiceTest {
         );
     }
 
+    @Test
+void analyzeSentiment_whenLookupReturnsEmptyList_triggersFallbackBranches() throws Exception {
+    // lookupClient returns "" or " " — simulates missing name
+    StubCompanyLookupClient lookupClient = new StubCompanyLookupClient("");
+
+    Map<String, Object> response = new HashMap<>();
+    response.put("articles", List.of()); // empty list
+
+    StubNewsApiClient newsClient = new StubNewsApiClient(response);
+
+    // Python result not used
+    StubSentimentPythonService sentimentService =
+            new StubSentimentPythonService(new SentimentResult("XYZ", 3, "neutral"));
+
+    NewsDataService service =
+            new NewsDataService(sentimentService, newsClient, lookupClient);
+
+    SentimentResult result = service.analyzeSentiment("XYZ");
+
+    assertEquals("XYZ", result.getCompany());          // fallback symbol
+    assertEquals(3, result.getSentimentScore());       // neutral fallback
+}
+
 
 }
