@@ -9,10 +9,19 @@ import java.util.Map;
 @Service
 public class NewsApiClient {
 
+    /** key to access API. */
     private static final String API_KEY = "5c1be135169f488a9b7080e6cb14a6d0";
+
+    /** url to locate API. */
     private static final String BASE_URL = "https://newsapi.org/v2/everything";
 
-    public Map<String, Object> fetchNews(String query) {
+    /**
+     * Grabs the most popular news article that are about given company.
+     *
+     * @param query A query used to determine what articles to look for
+     * @return a mapping of each news article's title and its content.
+     * */
+    public Map<String, Object> fetchNews(final String query) {
 
         RestTemplate rest = new RestTemplate();
 

@@ -9,10 +9,22 @@ import java.util.Map;
 @Service
 public class CompanyLookupClient {
 
-    private static final String API_KEY = "2K5f4fIVopDrEUgWHMqowmlBXzkQSosz";
-    private static final String BASE_URL = "https://financialmodelingprep.com/stable/search-symbol";
+    /** key to access Lookup API. */
+    private static final String API_KEY =
+            "2K5f4fIVopDrEUgWHMqowmlBXzkQSosz";
 
-    public String lookupCompanyName(String symbol) {
+    /** url to locate Lookup API. */
+    private static final String BASE_URL =
+            "https://financialmodelingprep.com/stable/search-symbol";
+
+    /**
+     * Looks up the corresponding company name based on
+     * stock symbol.
+     *
+     * @param symbol company stock symbol
+     * @return A company's full name
+     * */
+    public String lookupCompanyName(final String symbol) {
         RestTemplate rest = new RestTemplate();
 
         String url = UriComponentsBuilder.fromHttpUrl(BASE_URL)

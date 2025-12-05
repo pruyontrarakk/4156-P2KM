@@ -9,18 +9,36 @@ import java.util.Map;
 @Service
 public class NewsDataService {
 
+    /** Python service that analyzes sentiment. */
     private final SentimentPythonService sentimentPythonService;
+    /** Client that connects to News API. */
     private final NewsApiClient newsApiClient;
+    /** Client that connects to Lookup API. */
     private final CompanyLookupClient lookupClient;
+    /** Maximum length of each article pulled. */
+    private static final int MAX_ARTICLE_LEN = 2000;
+    /** Default sentiment score of company. */
+    private static final int DEFAULT_SENTIMENT_SCORE = 3;
 
-    public NewsDataService(SentimentPythonService sentimentPythonService,
-                           NewsApiClient newsApiClient,
-                           CompanyLookupClient lookupClient) {
-        this.sentimentPythonService = sentimentPythonService;
-        this.newsApiClient = newsApiClient;
-        this.lookupClient = lookupClient;
+    /**
+     * All args constructor.
+     *
+     * @param thisSentimentPythonService service used to analyze sentiment
+     * @param thisNewsApiClient API used to look up news articles
+     * @param thisLookupClient Used to look up a company name and symbol
+     * */
+    public NewsDataService(final SentimentPythonService
+                                   thisSentimentPythonService,
+                           final NewsApiClient thisNewsApiClient,
+                           final CompanyLookupClient thisLookupClient) {
+        this.sentimentPythonService = thisSentimentPythonService;
+        this.newsApiClient = thisNewsApiClient;
+        this.lookupClient = thisLookupClient;
     }
 
+    /**
+     * No args constructor.
+     * */
     public NewsDataService() {
         this.sentimentPythonService = new SentimentPythonService();
         this.newsApiClient = new NewsApiClient();
@@ -28,9 +46,14 @@ public class NewsDataService {
     }
 
     /**
-     * Symbol → Company Name → NewsAPI → Sentiment
+     * Analyzes sentiment of news articles that are written about
+     * given company.
+     *
+     * @param symbol company stock symbol
+     * @return {@link SentimentResult} object
      */
-    public SentimentResult analyzeSentiment(String symbol) throws Exception {
+    public SentimentResult analyzeSentiment(final String symbol)
+            throws Exception {
 
         // 1. Lookup company name using FMP
         String companyName = lookupClient.lookupCompanyName(symbol);
@@ -49,24 +72,32 @@ public class NewsDataService {
                 (List<Map<String, Object>>) response.get("articles");
 
         if (articles == null || articles.isEmpty()) {
-            return new SentimentResult(symbol, 3, "neutral");
+            return new SentimentResult(symbol,
+                    DEFAULT_SENTIMENT_SCORE, "neutral");
         }
 
         // 3. Build article text
         StringBuilder sb = new StringBuilder();
         for (Map<String, Object> article : articles) {
-            if (article.get("title") != null)
+            if (article.get("title") != null) {
                 sb.append(article.get("title")).append(". ");
-            if (article.get("description") != null)
+            }
+            if (article.get("description") != null) {
                 sb.append(article.get("description")).append(". ");
-            if (sb.length() > 2000) break;
+            }
+            if (sb.length() > MAX_ARTICLE_LEN) {
+                break;
+            }
         }
 
         String text = sb.toString().trim();
-        if (text.isEmpty()) text = query;
+        if (text.isEmpty()) {
+            text = query;
+        }
 
         // 4. Sentiment from Python
-        SentimentResult pythonResult = sentimentPythonService.analyzeSentiment(text);
+        SentimentResult pythonResult = sentimentPythonService
+                .analyzeSentiment(text);
 
         // 5. Final result → include original stock symbol
         return new SentimentResult(symbol,
