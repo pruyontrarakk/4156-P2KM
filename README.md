@@ -49,46 +49,50 @@ That service runs the Python script, which loads the Hugging Face model and prod
 The JSON is parsed in Java and returned through the API.
 
 API endpoint:    
-```GET /market/sentiment```
+- ```GET /market/sentiment```
 
 Query parameters:   
-```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)   
-```force``` – optional; set to true to bypass cached results and run a fresh analysis
+- ```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)    
+- ```force``` – optional; set to true to bypass cached results and run a fresh analysis
 
 Example requests:
-http://localhost:8080/market/sentiment
-http://localhost:8080/market/sentiment?symbol=TSLA
-http://localhost:8080/market/sentiment?symbol=META&force=true
+- http://localhost:8080/market/sentiment
+- http://localhost:8080/market/sentiment?symbol=TSLA
+- http://localhost:8080/market/sentiment?symbol=META&force=true
 
 Example response:
 
-{
+- {
   "company": "AMZN",
   "sentimentScore": 4,
   "sentimentLabel": "positive",
   "source": "HuggingFaceModel"
 }
 
-How to test it:
-
 Start the service:
+- Run in terminal 1:
+```
 cd service
 mvn spring-boot:run
-
-In another terminal or your browser, go to:
-http://localhost:8080/market/sentiment?symbol=AMZN
+```
+- Run in terminal 2: 
+```
+curl -i "http://localhost:8080/market/sentiment?symbol=AMZN"
+```
 The endpoint will return a JSON object with the sentiment score and label.
 
 Setting up the Python environment (first time only):
 
 The sentiment model runs through a Python script.
-If you haven’t set it up yet, do this once:
+- If you haven’t set it up yet, do this once:
 
+```
 cd service/src/main/java/com/example/market/service/news/python
 python3 -m venv venv
 source venv/bin/activate
 pip install transformers torch
 python3 sentiment_model.py AMZN
+```
 
 This installs the required libraries and downloads the model.
 After that, Spring Boot can call it automatically for future requests.
