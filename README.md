@@ -103,6 +103,18 @@ Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi3
 It includes a helper class called PythonService, which executes a Python script running TrendMaster's forecasting model. 
 The service then parses the script's JSON-formatted output and constructs a Map of dates and predicted prices for the ForecastDataService to use.
 
+To operate this service, 
+- Run in terminal 1:
+```
+cd service
+export ALPHAVANTAGE_API_KEY='<your_api_key>'
+mvn spring-boot:run
+```
+- Run in terminal 2:
+```
+curl -i "http://localhost:8080/market/predict?symbol=META"
+```
+
 ### 4. AdjustedPredictionService
 Service that adjusts stock price predictions based on news sentiment analysis to produce sentiment-adjusted price forecasts.
 
