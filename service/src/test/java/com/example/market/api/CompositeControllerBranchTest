@@ -1,0 +1,175 @@
+// src/test/java/com/example/market/api/CompositeControllerBranchTest.java
+package com.example.market.api;
+
+import com.example.market.model.news.SentimentResult;
+import com.example.market.service.analysis.AdjustedPredictionService;
+import com.example.market.service.forecast.ForecastDataService;
+import com.example.market.service.news.NewsDataService;
+import com.example.market.service.stock.JsonStore;
+import com.example.market.service.stock.StockDataService;
+import org.junit.jupiter.api.Test;
+import org.springframework.http.ResponseEntity;
+
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class CompositeControllerBranchTest {
+
+    // ---- very small stubs ----
+
+    static class StubStockDataService implements StockDataService {
+        @Override
+        public Map<String, String> getDailySeries(String symbol) {
+            // Not used by combined-prediction
+            return Collections.emptyMap();
+        }
+    }
+
+    static class StubForecastDataService extends ForecastDataService {
+        Map<String, String> lastArgs;
+
+        StubForecastDataService() {
+            super(null); // adjust to your actual constructor
+        }
+
+        @Override
+        public Map<String, String> predictFuturePrices(String symbol, Integer horizon) {
+            lastArgs = new HashMap<>();
+            lastArgs.put("symbol", symbol);
+            lastArgs.put("horizon", String.valueOf(horizon));
+            Map<String, String> result = new HashMap<>();
+            result.put("2025-01-01", "123.45");
+            return result;
+        }
+    }
+
+    static class StubNewsDataService extends NewsDataService {
+        private final SentimentResult toReturn;
+        private final RuntimeException toThrow;
+
+        StubNewsDataService(SentimentResult toReturn) {
+            super(null, null, null); // adjust for your constructor
+            this.toReturn = toReturn;
+            this.toThrow = null;
+        }
+
+        StubNewsDataService(RuntimeException toThrow) {
+            super(null, null, null);
+            this.toReturn = null;
+            this.toThrow = toThrow;
+        }
+
+        @Override
+        public SentimentResult analyzeSentiment(String symbol) {
+            if (toThrow != null) throw toThrow;
+            return toReturn;
+        }
+    }
+
+    static class StubAdjustedPredictionService extends AdjustedPredictionService {
+        public StubAdjustedPredictionService() {
+            super(null);
+        }
+
+        @Override
+        public Map<String, String> adjustPredictions(
+                Map<String, String> original, SentimentResult sentiment) {
+            // Append "*adj" to every predicted price
+            Map<String, String> adjusted = new HashMap<>();
+            original.forEach((k, v) -> adjusted.put(k, v + "*adj"));
+            return adjusted;
+        }
+    }
+
+    private CompositeController makeControllerNewsOk() {
+        JsonStore store = new JsonStore(null); // adjust if needed
+        StockDataService stock = new StubStockDataService();
+        StubForecastDataService forecast = new StubForecastDataService();
+        SentimentResult sentiment =
+                new SentimentResult("XYZ", 4, "positive");
+        NewsDataService news = new StubNewsDataService(sentiment);
+        AdjustedPredictionService analysis = new StubAdjustedPredictionService();
+
+        return new CompositeController(store, stock, forecast, news, analysis);
+    }
+
+    @Test
+    void combinedPrediction_missingSymbol_returnsBadRequest() {
+        CompositeController controller = makeControllerNewsOk();
+
+        ResponseEntity<?> response =
+                controller.getCombinedPrediction(null, 10);
+
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void combinedPrediction_invalidHorizon_returnsBadRequest() {
+        CompositeController controller = makeControllerNewsOk();
+
+        ResponseEntity<?> tooLow =
+                controller.getCombinedPrediction("XYZ", 0);
+        ResponseEntity<?> tooHigh =
+                controller.getCombinedPrediction("XYZ", 366);
+
+        assertEquals(400, tooLow.getStatusCode().value());
+        assertEquals(400, tooHigh.getStatusCode().value());
+    }
+
+    @Test
+    void combinedPrediction_illegalArgumentFromService_returnsBadRequest() {
+        JsonStore store = new JsonStore(null);
+        StockDataService stock = new StubStockDataService();
+        ForecastDataService forecast = new StubForecastDataService();
+        // News service throws IllegalArgumentException → 400
+        NewsDataService news = new StubNewsDataService(
+                new IllegalArgumentException("Bad symbol"));
+        AdjustedPredictionService analysis = new StubAdjustedPredictionService();
+
+        CompositeController controller =
+                new CompositeController(store, stock, forecast, news, analysis);
+
+        ResponseEntity<?> response =
+                controller.getCombinedPrediction("BAD", 10);
+
+        assertEquals(400, response.getStatusCode().value());
+    }
+
+    @Test
+    void combinedPrediction_runtimeExceptionFromService_returnsInternalServerError() {
+        JsonStore store = new JsonStore(null);
+        StockDataService stock = new StubStockDataService();
+        ForecastDataService forecast = new StubForecastDataService();
+        // Unchecked exception → 500
+        NewsDataService news = new StubNewsDataService(
+                new RuntimeException("Boom"));
+        AdjustedPredictionService analysis = new StubAdjustedPredictionService();
+
+        CompositeController controller =
+                new CompositeController(store, stock, forecast, news, analysis);
+
+        ResponseEntity<?> response =
+                controller.getCombinedPrediction("XYZ", 10);
+
+        assertEquals(500, response.getStatusCode().value());
+    }
+
+    @Test
+    void combinedPrediction_happyPath_returnsAllSections() {
+        CompositeController controller = makeControllerNewsOk();
+
+        ResponseEntity<?> response =
+                controller.getCombinedPrediction("XYZ", 10);
+
+        assertEquals(200, response.getStatusCode().value());
+        assertTrue(response.getBody() instanceof Map);
+        Map<?, ?> body = (Map<?, ?>) response.getBody();
+
+        assertTrue(body.containsKey("sentiment"));
+        assertTrue(body.containsKey("originalPredictions"));
+        assertTrue(body.containsKey("adjustedPredictions"));
+    }
+}
