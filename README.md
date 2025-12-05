@@ -150,7 +150,7 @@ The following code can be run in terminal to check the checkstyle report.
 2. `mvn checkstyle:checkstyle`
 
 Results:
-![alt-test](images/style_report)
+![alt-test](images/style_report.png)
 
 ## Branch Coverage Report
 JaCoCo was used to perform branch analysis in order to see the branch coverage.
