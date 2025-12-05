@@ -6,45 +6,95 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.Map;
+
 public class newsUnitTest {
 
     @Test
     public void testAnalyzeSentiment_withMockedPythonService() throws Exception {
-        // Create a mock of the Python service
+
+        // Mock Python service
         SentimentPythonService mockPythonService = mock(SentimentPythonService.class);
 
-        // Define mock responses
-        when(mockPythonService.analyzeSentiment("Amazon"))
-                .thenReturn(new SentimentResult("Amazon", 4, "positive"));
-        when(mockPythonService.analyzeSentiment("Meta"))
-                .thenReturn(new SentimentResult("Meta", 3, "neutral"));
-        when(mockPythonService.analyzeSentiment("Tesla"))
-                .thenReturn(new SentimentResult("Tesla", 2, "negative"));
+        // Mock News API client
+        NewsApiClient mockNewsApiClient = mock(NewsApiClient.class);
 
-        // Inject the mock into the NewsDataService
-        NewsDataService newsService = new NewsDataService(mockPythonService);
+        // Mock company lookup client
+        CompanyLookupClient mockLookupClient = mock(CompanyLookupClient.class);
 
-        // Verify results for Amazon
-        SentimentResult amazon = newsService.analyzeSentiment("Amazon");
-        assertEquals("Amazon", amazon.getCompany());
+        // Symbol → Company name mapping
+        when(mockLookupClient.lookupCompanyName("AMZN"))
+                .thenReturn("Amazon Inc.");
+        when(mockLookupClient.lookupCompanyName("META"))
+                .thenReturn("Meta Platforms Inc.");
+        when(mockLookupClient.lookupCompanyName("TSLA"))
+                .thenReturn("Tesla Inc.");
+
+
+        when(mockNewsApiClient.fetchNews(contains("Amazon")))
+                .thenReturn(Map.of(
+                        "articles", java.util.List.of(
+                                Map.of("title", "Amazon reports strong growth",
+                                       "description", "Amazon stock surges")
+                        )
+                ));
+
+        when(mockNewsApiClient.fetchNews(contains("Meta")))
+                .thenReturn(Map.of(
+                        "articles", java.util.List.of(
+                                Map.of("title", "Meta releases new features",
+                                       "description", "Mixed reactions")
+                        )
+                ));
+
+        when(mockNewsApiClient.fetchNews(contains("Tesla")))
+                .thenReturn(Map.of(
+                        "articles", java.util.List.of(
+                                Map.of("title", "Tesla faces autopilot concerns",
+                                       "description", "Investors worried")
+                        )
+                ));
+
+        when(mockPythonService.analyzeSentiment(anyString()))
+                .thenAnswer(invocation -> {
+                    String text = invocation.getArgument(0).toString().toLowerCase();
+
+                    if (text.contains("amazon"))
+                        return new SentimentResult("AMZN", 4, "positive");
+
+                    if (text.contains("meta"))
+                        return new SentimentResult("META", 3, "neutral");
+
+                    if (text.contains("tesla"))
+                        return new SentimentResult("TSLA", 2, "negative");
+
+                    return new SentimentResult("UNKNOWN", 3, "neutral");
+                });
+
+
+        NewsDataService newsService =
+                new NewsDataService(mockPythonService, mockNewsApiClient, mockLookupClient);
+
+
+       // Amazon
+        SentimentResult amazon = newsService.analyzeSentiment("AMZN");
         assertEquals(4, amazon.getSentimentScore());
         assertEquals("positive", amazon.getSentimentLabel());
+        verify(mockLookupClient).lookupCompanyName("AMZN");
 
-        // Verify results for Meta
-        SentimentResult meta = newsService.analyzeSentiment("Meta");
-        assertEquals("Meta", meta.getCompany());
+        // Meta
+        SentimentResult meta = newsService.analyzeSentiment("META");
         assertEquals(3, meta.getSentimentScore());
         assertEquals("neutral", meta.getSentimentLabel());
+        verify(mockLookupClient).lookupCompanyName("META");
 
-        // Verify results for Tesla
-        SentimentResult tesla = newsService.analyzeSentiment("Tesla");
-        assertEquals("Tesla", tesla.getCompany());
+        // Tesla
+        SentimentResult tesla = newsService.analyzeSentiment("TSLA");
         assertEquals(2, tesla.getSentimentScore());
         assertEquals("negative", tesla.getSentimentLabel());
+        verify(mockLookupClient).lookupCompanyName("TSLA");
 
-        // Confirm that the mock was called exactly once per company
-        verify(mockPythonService, times(1)).analyzeSentiment("Amazon");
-        verify(mockPythonService, times(1)).analyzeSentiment("Meta");
-        verify(mockPythonService, times(1)).analyzeSentiment("Tesla");
+        // Ensure Python service was used
+        verify(mockPythonService, atLeastOnce()).analyzeSentiment(anyString());
     }
 }

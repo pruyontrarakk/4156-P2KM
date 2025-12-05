@@ -143,17 +143,17 @@ class CompositeControllerWebLayerTest {
     when(stocks.fetchDaily(eq("AMZN"), anyString())).thenReturn(fresh);
 
     Map<String, String> forecastMap = Map.of("2025-10-24", "106.50");
-    when(forecast.predictFuturePrices("AMZN")).thenReturn(forecastMap);
+    when(forecast.predictFuturePrices("AMZN", 10)).thenReturn(forecastMap);
 
     mvc.perform(get("/market/predict").param("force", "true"))
         .andExpect(status().isOk())
         .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
         .andExpect(jsonPath("$.symbol").value("AMZN"))
-        .andExpect(jsonPath("$.horizon").value("next-day"))
+        .andExpect(jsonPath("$.horizon").value(10))
         .andExpect(jsonPath("$.prediction.2025-10-24").value("106.50"))
         .andExpect(jsonPath("$.source").value("mock-source"));
 
     verify(store).write(eq(cache), eq(fresh));
-    verify(forecast).predictFuturePrices("AMZN");
+    verify(forecast).predictFuturePrices("AMZN", 10);
   }
 }
