@@ -205,6 +205,10 @@ curl -i "https://market-service-263313208284.us-central1.run.app/market/sentimen
 # Sentiment-adjusted price forecasts
 curl -i "https://market-service-263313208284.us-central1.run.app/market/combined-prediction?symbol=AMZN"
 ```
+<img width="1217" height="873" alt="image" src="https://github.com/user-attachments/assets/505474d2-478d-41e8-a5d1-5040bb55e116" />
+
+<img width="417" height="611" alt="image" src="https://github.com/user-attachments/assets/b313583b-190e-412e-a3c8-1094ef3d8b80" />
+
 You can also point the Python client (see Client Program section below) at this URL via the SERVICE_BASE_URL environment variable:
 ```bash
 export SERVICE_BASE_URL="https://market-service-263313208284.us-central1.run.app"
