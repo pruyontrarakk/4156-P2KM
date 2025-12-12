@@ -11,6 +11,22 @@ In order to build and use our service you must install the following (for Mac):
 - Python 3.10.9 - download following the instructions per this link: https://www.python.org/downloads/release/python-3109/
 - TrendMaster - download following the instructions per this link: https://github.com/hemangjoshi37a/TrendMaster/blob/main/docs/installation.md
 
+  Setting up the Python environment (first time only):
+
+The sentiment and prediction models runs Python scripts:
+- If you haven’t set it up yet, do this once:
+
+```
+cd service/src/main/java/com/example/market/service/news/python
+python3 -m venv venv
+source venv/bin/activate
+pip install transformers torch
+python3 sentiment_model.py AMZN
+```
+
+This installs the required libraries and downloads the model.
+After that, Spring Boot can call it automatically for future requests.
+
 ## Microservice Architecture
 The API architecture is built around four core microservices - **StockDataService**, **NewsDataService**, **ForecastDataService**, and **AdjustedPredictionService**. These services are unified through the **CompositeController**, which acts as the central RESTful interface that aggregates their outputs and delivers user-friendly responses to clients.
 
@@ -26,6 +42,26 @@ Has a function ```fetchDaily(String symbol, String apiKey)``` that returns ```St
 Has a function ```JsonNode getJson(String url)``` 
 * Performs an HTTP GET to url, expects a 200 response, and parses the body into a Jackson JsonNode`.
 * Used by ```StockDataService.fetchDaily``` to call external APIs and obtain a parsed JSON.
+  
+API endpoint:    
+- ```GET /market/daily```
+  
+Query parameters:   
+- ```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)    
+
+Example requests:
+- http://localhost:8080/market/daily
+- http://localhost:8080/market/daily?symbol=META
+  
+Example response:
+
+    {
+      "symbol": "META",
+      "asOfIso": "2025-12-12T17:15:39.597558Z",
+      "source": "alphavantage: TIME_SERIES_DAILY,
+      url= "https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=compact&symbol=META&apikey=4LJASDTNE415HP7A",
+      "bars": {"timestamp":"2025-07-23","open":706.3650,"high":714.6285,"low":704.9300,"close":713.5800,"volume":8771615}, ..., ]
+    }
 
 
 To operate this particular API service, 
@@ -62,12 +98,12 @@ Example requests:
 
 Example response:
 
-- {
-  "company": "AMZN",
-  "sentimentScore": 4,
-  "sentimentLabel": "positive",
-  "source": "HuggingFaceModel"
-}
+    {
+      "company": "AMZN",
+      "sentimentScore": 4,
+      "sentimentLabel": "positive",
+      "source": "HuggingFaceModel"
+    }
 
 Start the service:
 - Run in terminal 1:
@@ -81,21 +117,6 @@ curl -i "http://localhost:8080/market/sentiment?symbol=AMZN"
 ```
 The endpoint will return a JSON object with the sentiment score and label.
 
-Setting up the Python environment (first time only):
-
-The sentiment model runs through a Python script.
-- If you haven’t set it up yet, do this once:
-
-```
-cd service/src/main/java/com/example/market/service/news/python
-python3 -m venv venv
-source venv/bin/activate
-pip install transformers torch
-python3 sentiment_model.py AMZN
-```
-
-This installs the required libraries and downloads the model.
-After that, Spring Boot can call it automatically for future requests.
 
 ### 3. ForecastDataService
 Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi37a)'s open-source library [TrendMaster](https://github.com/hemangjoshi37a/TrendMaster). 
@@ -103,6 +124,27 @@ Spring Boot service that utilizes [Hemang Joshi](https://github.com/hemangjoshi3
 It includes a helper class called PythonService, which executes a Python script running TrendMaster's forecasting model. 
 The service then parses the script's JSON-formatted output and constructs a Map of dates and predicted prices for the ForecastDataService to use.
 
+API endpoint:    
+- ```GET /market/predict```
+  
+Query parameters:   
+- ```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)
+- ```horizon``` – optional; the number of days to predict into the future (default is 10)
+- ```force``` – optional; set to true to bypass cached results and run a fresh analysis (default is false)    
+
+Example requests:
+- http://localhost:8080/market/predict?symbol=META&horizon=2
+- http://localhost:8080/market/predict?symbol=META&horizon=11&force=true
+  
+Example response:
+
+    {
+      "symbol": "META",
+      "prediction": {"2025-12-03":"643.2826028848","2025-12-02":"643.3018468213"},
+      "source": "alphavantage: TIME_SERIES_DAILY, url=https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&outputsize=compact&symbol=META&apikey=4LJASDTNE415HP7A",
+      "horizon": 2
+    }
+    
 To operate this service, 
 - Run in terminal 1:
 ```
@@ -124,6 +166,23 @@ Has a function ```adjustPricesWithSentiment(Map<String, String> stockPricePredic
 * Uses a sophisticated non-linear formula with time decay to model how sentiment impacts future prices differently over time
 * Applies sentiment adjustments that diminish over time (time decay factor of 0.12)
 * Returns a map with the same date keys but sentiment-adjusted prices
+
+API endpoint:    
+- ```GET /market/combined-prediction```
+  
+Query parameters:   
+- ```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)
+- ```horizon``` – optional; the number of days to predict into the future (default is 10)
+- ```force``` – optional; set to true to bypass cached results and run a fresh analysis (default is false)
+
+Example response:
+
+    {
+      "symbol": "AMZN",
+      "sentiment": {"label":"very negative","score":1},
+      "adjustedPredictions": {"2025-12-05":"190.90","2025-12-04":"190.87","2025-12-07":"190.90","2025-12-06":"190.90","2025-12-11":"190.85","2025-12-03":"190.87",...},
+      "originalPredictions":{"2025-12-05":"223.1690032291","2025-12-04":"223.1414578668","2025-12-07":"223.1736539197","2025-12-06":"223.1712185168",...}
+    }
 
 To operate this particular API service, 
 - Run in terminal 1:
