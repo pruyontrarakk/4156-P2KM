@@ -89,7 +89,7 @@ API endpoint:
 
 Query parameters:   
 - ```symbol``` – optional; the company name or stock ticker to analyze (default is AMZN)    
-- ```force``` – optional; set to true to bypass cached results and run a fresh analysis
+- ```force``` – optional; set to true to bypass cached results and run a fresh analysis (default is false)
 
 Example requests:
 - http://localhost:8080/market/sentiment
